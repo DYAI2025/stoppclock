@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { Play, Pause, RotateCcw, Flag, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,52 +9,14 @@ import { useTimerContext } from "@/contexts/TimerContext";
 export default function Stopwatch() {
   const { updateTimer, getTimer, removeTimer } = useTimerContext();
   const timerId = "stopwatch-1";
-  const existingTimer = getTimer(timerId);
   
-  const [time, setTime] = useState(existingTimer?.currentTime || 0);
-  const [isRunning, setIsRunning] = useState(existingTimer?.isRunning || false);
   const [laps, setLaps] = useState<number[]>([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const intervalRef = useRef<number>();
 
-  // Sync with global timer state
-  useEffect(() => {
-    const timer = getTimer(timerId);
-    if (timer) {
-      setTime(timer.currentTime);
-      setIsRunning(timer.isRunning);
-    }
-  }, []);
-
-  // Update global state whenever local state changes
-  useEffect(() => {
-    if (isRunning || time > 0) {
-      updateTimer({
-        id: timerId,
-        type: "stopwatch",
-        name: "Stopwatch",
-        color: "stopwatch",
-        currentTime: time,
-        isRunning: isRunning,
-        path: "/stopwatch",
-      });
-    } else if (time === 0 && !isRunning) {
-      removeTimer(timerId);
-    }
-  }, [time, isRunning]);
-
-  useEffect(() => {
-    if (isRunning) {
-      intervalRef.current = window.setInterval(() => {
-        setTime((t) => t + 10);
-      }, 10);
-    } else {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    }
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [isRunning]);
+  // Get current timer state from context
+  const existingTimer = getTimer(timerId);
+  const time = existingTimer?.currentTime || 0;
+  const isRunning = existingTimer?.isRunning || false;
 
   const formatTime = (ms: number) => {
     const totalSeconds = Math.floor(ms / 1000);
@@ -69,13 +31,23 @@ export default function Stopwatch() {
     return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}.${milliseconds.toString().padStart(2, "0")}`;
   };
 
-  const handleStartPause = () => setIsRunning(!isRunning);
+  const handleStartPause = () => {
+    updateTimer({
+      id: timerId,
+      type: "stopwatch",
+      name: "Stopwatch",
+      color: "stopwatch",
+      currentTime: time,
+      isRunning: !isRunning,
+      path: "/stopwatch",
+    });
+  };
+
   const handleReset = () => {
-    setTime(0);
-    setIsRunning(false);
     setLaps([]);
     removeTimer(timerId);
   };
+
   const handleLap = () => {
     if (isRunning) setLaps([time, ...laps]);
   };

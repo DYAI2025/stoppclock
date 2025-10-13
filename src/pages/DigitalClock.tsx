@@ -1,13 +1,35 @@
 import { useState, useEffect } from "react";
-import { Home } from "lucide-react";
+import { Home, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FullscreenButton } from "@/components/FullscreenButton";
 import { Link } from "react-router-dom";
+import { useTimerContext } from "@/contexts/TimerContext";
+
+const TIMEZONES = [
+  { name: "Berlin", timezone: "Europe/Berlin" },
+  { name: "London", timezone: "Europe/London" },
+  { name: "New York", timezone: "America/New_York" },
+  { name: "São Paulo", timezone: "America/Sao_Paulo" },
+  { name: "Dubai", timezone: "Asia/Dubai" },
+  { name: "Mumbai", timezone: "Asia/Kolkata" },
+  { name: "Shanghai", timezone: "Asia/Shanghai" },
+  { name: "Tokyo", timezone: "Asia/Tokyo" },
+  { name: "Seoul", timezone: "Asia/Seoul" },
+  { name: "Sydney", timezone: "Australia/Sydney" },
+  { name: "Los Angeles", timezone: "America/Los_Angeles" },
+  { name: "Chicago", timezone: "America/Chicago" },
+];
 
 export default function DigitalClock() {
+  const { updateTimer, getTimer } = useTimerContext();
+  const timerId = "clock-1";
+  
   const [time, setTime] = useState(new Date());
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [timezoneIndex, setTimezoneIndex] = useState(0);
+
+  const currentTimezone = TIMEZONES[timezoneIndex];
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -16,22 +38,41 @@ export default function DigitalClock() {
     return () => clearInterval(interval);
   }, []);
 
+  // Always show clock in timer bar
+  useEffect(() => {
+    updateTimer({
+      id: timerId,
+      type: "stopwatch", // Use stopwatch type for display
+      name: `Uhr - ${currentTimezone.name}`,
+      color: "clock",
+      currentTime: time.getTime(),
+      isRunning: true,
+      path: "/clock",
+    });
+  }, [time, currentTimezone, updateTimer, timerId]);
+
   const formatTime = () => {
-    return time.toLocaleTimeString('en-US', { 
+    return time.toLocaleTimeString('de-DE', { 
       hour: '2-digit', 
       minute: '2-digit', 
       second: '2-digit',
-      hour12: false 
+      hour12: false,
+      timeZone: currentTimezone.timezone
     });
   };
 
   const formatDate = () => {
-    return time.toLocaleDateString('en-US', { 
+    return time.toLocaleDateString('de-DE', { 
       weekday: 'long', 
       year: 'numeric', 
       month: 'long', 
-      day: 'numeric' 
+      day: 'numeric',
+      timeZone: currentTimezone.timezone
     });
+  };
+
+  const nextTimezone = () => {
+    setTimezoneIndex((prev) => (prev + 1) % TIMEZONES.length);
   };
 
   const toggleFullscreen = () => setIsFullscreen(!isFullscreen);
@@ -40,11 +81,23 @@ export default function DigitalClock() {
     return (
       <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gradient-to-br from-clock/5 to-clock/20 p-4">
         <div className="w-full max-w-6xl flex flex-col items-center space-y-12">
-          <h1 className="text-4xl font-bold text-clock">Digital Clock</h1>
+          <div className="flex items-center gap-4">
+            <Globe className="w-10 h-10 text-clock" />
+            <h1 className="text-4xl font-bold text-clock">{currentTimezone.name}</h1>
+          </div>
           <div className="timer-display text-[12rem] md:text-[16rem] font-bold text-clock leading-none">
             {formatTime()}
           </div>
           <p className="text-3xl text-muted-foreground">{formatDate()}</p>
+          <Button
+            onClick={nextTimezone}
+            size="lg"
+            className="h-16 px-12 text-xl gap-3"
+            style={{ backgroundColor: `hsl(var(--clock))` }}
+          >
+            <Globe className="w-6 h-6" />
+            Zeitzone wechseln
+          </Button>
           <FullscreenButton isFullscreen={isFullscreen} onToggle={toggleFullscreen} color="clock" />
         </div>
       </div>
@@ -68,13 +121,49 @@ export default function DigitalClock() {
         <Card className="border-2" style={{ borderColor: `hsl(var(--clock))` }}>
           <CardContent className="p-8 space-y-8">
             <div className="text-center space-y-6">
+              <div className="flex items-center justify-center gap-3 mb-4">
+                <Globe className="w-8 h-8 text-clock" />
+                <h2 className="text-3xl font-bold text-clock">{currentTimezone.name}</h2>
+              </div>
               <div className="timer-display text-7xl md:text-8xl font-bold text-clock">
                 {formatTime()}
               </div>
               <p className="text-2xl text-muted-foreground">{formatDate()}</p>
             </div>
 
+            <div className="flex justify-center">
+              <Button
+                onClick={nextTimezone}
+                size="lg"
+                className="gap-2"
+                style={{ backgroundColor: `hsl(var(--clock))` }}
+              >
+                <Globe className="w-5 h-5" />
+                Zeitzone wechseln
+              </Button>
+            </div>
+
             <FullscreenButton isFullscreen={isFullscreen} onToggle={toggleFullscreen} color="clock" />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <h3 className="text-lg font-bold mb-4 text-clock">Verfügbare Zeitzonen</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              {TIMEZONES.map((tz, index) => (
+                <Button
+                  key={tz.timezone}
+                  variant={index === timezoneIndex ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setTimezoneIndex(index)}
+                  className="justify-start"
+                  style={index === timezoneIndex ? { backgroundColor: `hsl(var(--clock))` } : {}}
+                >
+                  {tz.name}
+                </Button>
+              ))}
+            </div>
           </CardContent>
         </Card>
       </div>

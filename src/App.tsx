@@ -13,6 +13,7 @@ import AlarmClock from "./pages/AlarmClock";
 import Metronome from "./pages/Metronome";
 import ChessClock from "./pages/ChessClock";
 import LapTimer from "./pages/LapTimer";
+import PomodoroTimer from "./pages/PomodoroTimer";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
             <Route path="/metronome" element={<Metronome />} />
             <Route path="/chess" element={<ChessClock />} />
             <Route path="/lap" element={<LapTimer />} />
+            <Route path="/pomodoro" element={<PomodoroTimer />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

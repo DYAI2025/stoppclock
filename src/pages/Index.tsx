@@ -1,4 +1,13 @@
-import { Timer, Clock, Zap, Bell, Activity, Hourglass, Timer as TimerIcon, Swords } from "lucide-react";
+import {
+  Timer,
+  Clock,
+  Zap,
+  Bell,
+  Activity,
+  Hourglass,
+  Timer as TimerIcon,
+  Swords,
+} from "lucide-react";
 import { ToolCard } from "@/components/ToolCard";
 import { ActiveTimerBar } from "@/components/ActiveTimerBar";
 import { useTimerContext } from "@/contexts/TimerContext";
@@ -9,57 +18,57 @@ const tools = [
     description: "Precise time measurement with lap tracking",
     icon: Timer,
     color: "stopwatch",
-    path: "/stopwatch"
+    path: "/stopwatch",
   },
   {
     title: "Countdown Timer",
     description: "Set custom countdown timers",
     icon: Hourglass,
     color: "countdown",
-    path: "/countdown"
+    path: "/countdown",
   },
   {
     title: "Interval Timer",
     description: "Alternate between work and rest periods",
     icon: Zap,
     color: "interval",
-    path: "/interval"
+    path: "/interval",
   },
   {
     title: "Digital Clock",
     description: "Real-time digital clock display",
     icon: Clock,
     color: "clock",
-    path: "/clock"
+    path: "/clock",
   },
   {
     title: "Alarm Clock",
     description: "Set alarms and reminders",
     icon: Bell,
     color: "alarm",
-    path: "/alarm"
+    path: "/alarm",
   },
   {
     title: "Metronome",
     description: "Musical tempo and rhythm keeper",
     icon: Activity,
     color: "metronome",
-    path: "/metronome"
+    path: "/metronome",
   },
   {
     title: "Chess Clock",
     description: "Two-player game timer",
     icon: Swords,
     color: "chess",
-    path: "/chess"
+    path: "/chess",
   },
   {
-    title: "Lap Timer",
-    description: "Track multiple lap times",
+    title: "60s Timer",
+    description: "Quick 60-second analog countdown",
     icon: TimerIcon,
-    color: "lap",
-    path: "/lap"
-  }
+    color: "alarm",
+    path: "/pomodoro",
+  },
 ];
 
 export default function Index() {
@@ -67,13 +76,18 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-gradient-hero">
-      <div className={`container mx-auto px-4 py-12 space-y-12 ${activeTimers.length > 0 ? 'pb-48' : ''}`}>
+      <div
+        className={`container mx-auto px-4 py-12 space-y-12 transition-all duration-300 ${
+          activeTimers.length > 0 ? "pb-64" : "pb-12"
+        }`}
+      >
         <header className="text-center space-y-4">
           <h1 className="text-5xl md:text-6xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-            Time Tools
+            Stoppclock
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Professional timer toolkit with fullscreen displays for presentations, classrooms, and large audiences
+            Professionelles Timer-Toolkit mit Vollbildanzeigen für
+            Präsentationen, Klassenzimmer und große Zielgruppen
           </p>
         </header>
 
@@ -92,8 +106,20 @@ export default function Index() {
           </div>
         </section>
 
+        {activeTimers.length === 0 && (
+          <div className="text-center p-8 rounded-2xl bg-muted/30 border border-border/50 max-w-2xl mx-auto">
+            <p className="text-sm text-muted-foreground">
+              💡 Starten Sie einen Timer und kehren Sie hierher zurück – er
+              läuft sichtbar weiter!
+            </p>
+          </div>
+        )}
+
         <footer className="text-center text-sm text-muted-foreground pt-12 border-t">
-          <p>All timers feature fullscreen mode for maximum visibility</p>
+          <p>
+            Alle Timer verfügen über einen Vollbildmodus für maximale
+            Sichtbarkeit
+          </p>
         </footer>
       </div>
 

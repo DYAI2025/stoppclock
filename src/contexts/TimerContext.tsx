@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useRef,
+} from "react";
 
 export interface ActiveTimer {
   id: string;
@@ -25,7 +31,7 @@ export const TimerProvider = ({ children }: { children: React.ReactNode }) => {
   const [activeTimers, setActiveTimers] = useState<ActiveTimer[]>([]);
   const intervalRef = useRef<number>();
 
-  // Update all running timers every 10ms
+  // Update all running timers every 10ms for precise timing
   useEffect(() => {
     intervalRef.current = window.setInterval(() => {
       setActiveTimers((timers) =>
@@ -36,6 +42,7 @@ export const TimerProvider = ({ children }: { children: React.ReactNode }) => {
             return { ...timer, currentTime: timer.currentTime + 10 };
           } else if (timer.type === "countdown") {
             const newTime = Math.max(0, timer.currentTime - 10);
+            // Keep timer running state even at 0 to show completion
             return { ...timer, currentTime: newTime, isRunning: newTime > 0 };
           } else if (timer.type === "interval") {
             const newTime = timer.currentTime - 10;
@@ -69,6 +76,12 @@ export const TimerProvider = ({ children }: { children: React.ReactNode }) => {
         newTimers[existingIndex] = timer;
         return newTimers;
       } else {
+        // Limit to 3 active timers maximum
+        if (timers.length >= 3) {
+          // Replace the oldest timer
+          const newTimers = [...timers.slice(1), timer];
+          return newTimers;
+        }
         return [...timers, timer];
       }
     });
@@ -83,7 +96,9 @@ export const TimerProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <TimerContext.Provider value={{ activeTimers, updateTimer, removeTimer, getTimer }}>
+    <TimerContext.Provider
+      value={{ activeTimers, updateTimer, removeTimer, getTimer }}
+    >
       {children}
     </TimerContext.Provider>
   );

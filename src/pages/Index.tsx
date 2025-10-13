@@ -1,5 +1,7 @@
 import { Timer, Clock, Zap, Bell, Activity, Hourglass, Timer as TimerIcon, Swords } from "lucide-react";
 import { ToolCard } from "@/components/ToolCard";
+import { ActiveTimerBar } from "@/components/ActiveTimerBar";
+import { useTimerContext } from "@/contexts/TimerContext";
 
 const tools = [
   {
@@ -61,9 +63,11 @@ const tools = [
 ];
 
 export default function Index() {
+  const { activeTimers } = useTimerContext();
+
   return (
     <div className="min-h-screen bg-gradient-hero">
-      <div className="container mx-auto px-4 py-12 space-y-12">
+      <div className={`container mx-auto px-4 py-12 space-y-12 ${activeTimers.length > 0 ? 'pb-48' : ''}`}>
         <header className="text-center space-y-4">
           <h1 className="text-5xl md:text-6xl font-bold bg-gradient-primary bg-clip-text text-transparent">
             Time Tools
@@ -92,6 +96,8 @@ export default function Index() {
           <p>All timers feature fullscreen mode for maximum visibility</p>
         </footer>
       </div>
+
+      <ActiveTimerBar />
     </div>
   );
 }

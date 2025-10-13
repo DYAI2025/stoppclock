@@ -5,16 +5,49 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { FullscreenButton } from "@/components/FullscreenButton";
 import { Link } from "react-router-dom";
+import { useTimerContext } from "@/contexts/TimerContext";
 
 export default function Countdown() {
-  const [targetTime, setTargetTime] = useState(60000); // 1 minute default
-  const [remainingTime, setRemainingTime] = useState(60000);
-  const [isRunning, setIsRunning] = useState(false);
+  const { updateTimer, getTimer, removeTimer } = useTimerContext();
+  const timerId = "countdown-1";
+  const existingTimer = getTimer(timerId);
+  
+  const [targetTime, setTargetTime] = useState(existingTimer?.targetTime || 60000);
+  const [remainingTime, setRemainingTime] = useState(existingTimer?.currentTime || 60000);
+  const [isRunning, setIsRunning] = useState(existingTimer?.isRunning || false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [hours, setHours] = useState(0);
   const [minutes, setMinutes] = useState(1);
   const [seconds, setSeconds] = useState(0);
   const intervalRef = useRef<number>();
+
+  // Sync with global timer state
+  useEffect(() => {
+    const timer = getTimer(timerId);
+    if (timer) {
+      setRemainingTime(timer.currentTime);
+      setIsRunning(timer.isRunning);
+      if (timer.targetTime) setTargetTime(timer.targetTime);
+    }
+  }, []);
+
+  // Update global state whenever local state changes
+  useEffect(() => {
+    if (isRunning || remainingTime < targetTime) {
+      updateTimer({
+        id: timerId,
+        type: "countdown",
+        name: "Countdown",
+        color: "countdown",
+        currentTime: remainingTime,
+        isRunning: isRunning,
+        targetTime: targetTime,
+        path: "/countdown",
+      });
+    } else if (remainingTime === targetTime && !isRunning) {
+      removeTimer(timerId);
+    }
+  }, [remainingTime, isRunning, targetTime]);
 
   useEffect(() => {
     if (isRunning) {
@@ -53,6 +86,7 @@ export default function Countdown() {
   const handleReset = () => {
     setIsRunning(false);
     setRemainingTime(targetTime);
+    removeTimer(timerId);
   };
 
   const handleSetTime = () => {
@@ -60,6 +94,7 @@ export default function Countdown() {
     setTargetTime(totalMs);
     setRemainingTime(totalMs);
     setIsRunning(false);
+    removeTimer(timerId);
   };
 
   const toggleFullscreen = () => setIsFullscreen(!isFullscreen);

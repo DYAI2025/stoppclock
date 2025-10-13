@@ -4,13 +4,44 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FullscreenButton } from "@/components/FullscreenButton";
 import { Link } from "react-router-dom";
+import { useTimerContext } from "@/contexts/TimerContext";
 
 export default function Stopwatch() {
-  const [time, setTime] = useState(0);
-  const [isRunning, setIsRunning] = useState(false);
+  const { updateTimer, getTimer, removeTimer } = useTimerContext();
+  const timerId = "stopwatch-1";
+  const existingTimer = getTimer(timerId);
+  
+  const [time, setTime] = useState(existingTimer?.currentTime || 0);
+  const [isRunning, setIsRunning] = useState(existingTimer?.isRunning || false);
   const [laps, setLaps] = useState<number[]>([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const intervalRef = useRef<number>();
+
+  // Sync with global timer state
+  useEffect(() => {
+    const timer = getTimer(timerId);
+    if (timer) {
+      setTime(timer.currentTime);
+      setIsRunning(timer.isRunning);
+    }
+  }, []);
+
+  // Update global state whenever local state changes
+  useEffect(() => {
+    if (isRunning || time > 0) {
+      updateTimer({
+        id: timerId,
+        type: "stopwatch",
+        name: "Stopwatch",
+        color: "stopwatch",
+        currentTime: time,
+        isRunning: isRunning,
+        path: "/stopwatch",
+      });
+    } else if (time === 0 && !isRunning) {
+      removeTimer(timerId);
+    }
+  }, [time, isRunning]);
 
   useEffect(() => {
     if (isRunning) {
@@ -43,6 +74,7 @@ export default function Stopwatch() {
     setTime(0);
     setIsRunning(false);
     setLaps([]);
+    removeTimer(timerId);
   };
   const handleLap = () => {
     if (isRunning) setLaps([time, ...laps]);

@@ -4,14 +4,45 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FullscreenButton } from "@/components/FullscreenButton";
 import { Link } from "react-router-dom";
+import { useTimerContext } from "@/contexts/TimerContext";
 
 export default function LapTimer() {
-  const [time, setTime] = useState(0);
-  const [isRunning, setIsRunning] = useState(false);
+  const { updateTimer, getTimer, removeTimer } = useTimerContext();
+  const timerId = "lap-1";
+  const existingTimer = getTimer(timerId);
+  
+  const [time, setTime] = useState(existingTimer?.currentTime || 0);
+  const [isRunning, setIsRunning] = useState(existingTimer?.isRunning || false);
   const [laps, setLaps] = useState<{ time: number; split: number }[]>([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const intervalRef = useRef<number>();
   const lastLapTime = useRef(0);
+
+  // Sync with global timer state
+  useEffect(() => {
+    const timer = getTimer(timerId);
+    if (timer) {
+      setTime(timer.currentTime);
+      setIsRunning(timer.isRunning);
+    }
+  }, []);
+
+  // Update global state whenever local state changes
+  useEffect(() => {
+    if (isRunning || time > 0) {
+      updateTimer({
+        id: timerId,
+        type: "lap",
+        name: "Lap Timer",
+        color: "lap",
+        currentTime: time,
+        isRunning: isRunning,
+        path: "/lap",
+      });
+    } else if (time === 0 && !isRunning) {
+      removeTimer(timerId);
+    }
+  }, [time, isRunning]);
 
   useEffect(() => {
     if (isRunning) {
@@ -41,6 +72,7 @@ export default function LapTimer() {
     setIsRunning(false);
     setLaps([]);
     lastLapTime.current = 0;
+    removeTimer(timerId);
   };
 
   const handleLap = () => {

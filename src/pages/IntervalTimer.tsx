@@ -5,16 +5,49 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { FullscreenButton } from "@/components/FullscreenButton";
 import { Link } from "react-router-dom";
+import { useTimerContext } from "@/contexts/TimerContext";
 
 export default function IntervalTimer() {
-  const [workTime, setWorkTime] = useState(25000); // 25 seconds work
-  const [restTime, setRestTime] = useState(5000); // 5 seconds rest
-  const [currentTime, setCurrentTime] = useState(25000);
-  const [isWorking, setIsWorking] = useState(true);
-  const [isRunning, setIsRunning] = useState(false);
+  const { updateTimer, getTimer, removeTimer } = useTimerContext();
+  const timerId = "interval-1";
+  const existingTimer = getTimer(timerId);
+  
+  const [workTime, setWorkTime] = useState(25000);
+  const [restTime, setRestTime] = useState(5000);
+  const [currentTime, setCurrentTime] = useState(existingTimer?.currentTime || 25000);
+  const [isWorking, setIsWorking] = useState(existingTimer?.isWorking ?? true);
+  const [isRunning, setIsRunning] = useState(existingTimer?.isRunning || false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [rounds, setRounds] = useState(0);
   const intervalRef = useRef<number>();
+
+  // Sync with global timer state
+  useEffect(() => {
+    const timer = getTimer(timerId);
+    if (timer) {
+      setCurrentTime(timer.currentTime);
+      setIsRunning(timer.isRunning);
+      setIsWorking(timer.isWorking ?? true);
+    }
+  }, []);
+
+  // Update global state whenever local state changes
+  useEffect(() => {
+    if (isRunning || currentTime !== workTime) {
+      updateTimer({
+        id: timerId,
+        type: "interval",
+        name: "Interval Timer",
+        color: "interval",
+        currentTime: currentTime,
+        isRunning: isRunning,
+        isWorking: isWorking,
+        path: "/interval",
+      });
+    } else if (currentTime === workTime && !isRunning && isWorking) {
+      removeTimer(timerId);
+    }
+  }, [currentTime, isRunning, isWorking, workTime]);
 
   useEffect(() => {
     if (isRunning) {
@@ -57,6 +90,7 @@ export default function IntervalTimer() {
     setCurrentTime(workTime);
     setIsWorking(true);
     setRounds(0);
+    removeTimer(timerId);
   };
 
   const toggleFullscreen = () => setIsFullscreen(!isFullscreen);

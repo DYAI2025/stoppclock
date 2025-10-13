@@ -81,14 +81,10 @@ export default function Index() {
           activeTimers.length > 0 ? "pb-64" : "pb-12"
         }`}
       >
-        <header className="text-center space-y-4">
+        <header className="text-center">
           <h1 className="text-5xl md:text-6xl font-bold bg-gradient-primary bg-clip-text text-transparent">
             Stoppclock
           </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Professionelles Timer-Toolkit mit Vollbildanzeigen für
-            Präsentationen, Klassenzimmer und große Zielgruppen
-          </p>
         </header>
 
         <section>

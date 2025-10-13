@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { TimerProvider } from "@/contexts/TimerContext";
+import { CookieBanner } from "@/components/CookieBanner";
 import Index from "./pages/Index";
 import Stopwatch from "./pages/Stopwatch";
 import Countdown from "./pages/Countdown";
@@ -24,6 +25,7 @@ const App = () => (
       <TimerProvider>
         <Toaster />
         <Sonner />
+        <CookieBanner />
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />

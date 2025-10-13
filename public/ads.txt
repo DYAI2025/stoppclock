@@ -1,0 +1,11 @@
+# ads.txt for Stoppclock.com
+# Google AdSense - TODO: Replace with your actual Publisher ID
+# Format: google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0
+# 
+# INSTRUCTIONS:
+# 1. Get your AdSense Publisher ID from: https://adsense.google.com/
+# 2. Replace 'pub-XXXXXXXXXXXXXXXX' below with your actual ID
+# 3. Uncomment the line below
+# 4. Upload this file to your root domain: https://stoppclock.com/ads.txt
+#
+# google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
@@ -23,17 +23,54 @@
       content="Professional timer and clock toolkit featuring stopwatch, countdown, alarm clock, and more."
     />
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://stoppclock.com" />
     <meta
       property="og:image"
       content="https://lovable.dev/opengraph-image-p98pqg.png"
     />
 
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@lovable_dev" />
+    <meta name="twitter:site" content="@stoppclock" />
     <meta
       name="twitter:image"
       content="https://lovable.dev/opengraph-image-p98pqg.png"
     />
+
+    <!-- Google Analytics 4 with Consent Mode v2 -->
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+
+      // Set default consent to 'denied' as a placeholder for Consent Mode v2
+      gtag("consent", "default", {
+        analytics_storage: "denied",
+        ad_storage: "denied",
+        ad_user_data: "denied",
+        ad_personalization: "denied",
+        wait_for_update: 500,
+      });
+
+      gtag("js", new Date());
+      // TODO: Replace 'G-XXXXXXXXXX' with your actual GA4 Measurement ID
+      gtag("config", "G-XXXXXXXXXX", {
+        anonymize_ip: true,
+        cookie_flags: "SameSite=None;Secure",
+      });
+    </script>
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"
+    ></script>
+
+    <!-- Google AdSense - Prepared but BLOCKED until consent -->
+    <!-- TODO: Replace 'ca-pub-XXXXXXXXXX' with your AdSense Publisher ID -->
+    <!-- UNCOMMENT when ready to activate:
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXX"
+            crossorigin="anonymous"
+            data-ad-frequency-hint="30s"></script>
+    -->
   </head>
 
   <body>

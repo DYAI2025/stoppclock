@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Homepage -->
+  <url>
+    <loc>https://stoppclock.com/</loc>
+    <lastmod>2025-10-13</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  
+  <!-- Stopwatch -->
+  <url>
+    <loc>https://stoppclock.com/stopwatch</loc>
+    <lastmod>2025-10-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
+  <!-- Countdown -->
+  <url>
+    <loc>https://stoppclock.com/countdown</loc>
+    <lastmod>2025-10-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
+  <!-- Interval Timer -->
+  <url>
+    <loc>https://stoppclock.com/interval</loc>
+    <lastmod>2025-10-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- Digital Clock -->
+  <url>
+    <loc>https://stoppclock.com/clock</loc>
+    <lastmod>2025-10-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- Alarm Clock -->
+  <url>
+    <loc>https://stoppclock.com/alarm</loc>
+    <lastmod>2025-10-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- Metronome -->
+  <url>
+    <loc>https://stoppclock.com/metronome</loc>
+    <lastmod>2025-10-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <!-- Chess Clock -->
+  <url>
+    <loc>https://stoppclock.com/chess</loc>
+    <lastmod>2025-10-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <!-- Lap Timer -->
+  <url>
+    <loc>https://stoppclock.com/lap</loc>
+    <lastmod>2025-10-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <!-- 60s Timer -->
+  <url>
+    <loc>https://stoppclock.com/pomodoro</loc>
+    <lastmod>2025-10-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+</urlset>

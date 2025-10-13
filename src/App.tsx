@@ -4,6 +4,14 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
+import Stopwatch from "./pages/Stopwatch";
+import Countdown from "./pages/Countdown";
+import IntervalTimer from "./pages/IntervalTimer";
+import DigitalClock from "./pages/DigitalClock";
+import AlarmClock from "./pages/AlarmClock";
+import Metronome from "./pages/Metronome";
+import ChessClock from "./pages/ChessClock";
+import LapTimer from "./pages/LapTimer";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -16,6 +24,14 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/stopwatch" element={<Stopwatch />} />
+          <Route path="/countdown" element={<Countdown />} />
+          <Route path="/interval" element={<IntervalTimer />} />
+          <Route path="/clock" element={<DigitalClock />} />
+          <Route path="/alarm" element={<AlarmClock />} />
+          <Route path="/metronome" element={<Metronome />} />
+          <Route path="/chess" element={<ChessClock />} />
+          <Route path="/lap" element={<LapTimer />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

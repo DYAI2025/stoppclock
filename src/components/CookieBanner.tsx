@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
+import { useI18n } from "@/contexts/I18nContext";
 
 declare global {
   interface Window {
@@ -11,6 +12,7 @@ declare global {
 
 export function CookieBanner() {
   const [showBanner, setShowBanner] = useState(false);
+  const { t } = useI18n();
 
   useEffect(() => {
     // Check if user has already made a choice
@@ -69,18 +71,15 @@ export function CookieBanner() {
       <div className="bg-card border-2 border-border rounded-xl shadow-2xl p-4 backdrop-blur-lg bg-opacity-95">
         <div className="flex items-start gap-3">
           <div className="flex-1 space-y-2">
-            <h3 className="font-semibold text-sm">🍪 Cookies & Analytics</h3>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Wir verwenden Cookies für Analytics und um die bestmögliche
-              Erfahrung zu bieten. Ihre Daten werden nicht verkauft.
-            </p>
+            <h3 className="font-semibold text-sm">🍪 {t("cookie.title")}</h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">{t("cookie.text")}</p>
             <div className="flex gap-2 pt-1">
               <Button
                 onClick={handleAccept}
                 size="sm"
                 className="flex-1 h-8 text-xs"
               >
-                Akzeptieren
+                {t("cookie.accept")}
               </Button>
               <Button
                 onClick={handleDecline}
@@ -88,14 +87,14 @@ export function CookieBanner() {
                 variant="outline"
                 className="flex-1 h-8 text-xs"
               >
-                Ablehnen
+                {t("cookie.decline")}
               </Button>
             </div>
           </div>
           <button
             onClick={handleDecline}
             className="text-muted-foreground hover:text-foreground transition-colors"
-            aria-label="Banner schließen"
+            aria-label={t("cookie.close")}
           >
             <X className="w-4 h-4" />
           </button>

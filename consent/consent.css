@@ -1,0 +1,7 @@
+/* Minimal styles for consent banner */
+#consent { position: fixed; left: 50%; transform: translateX(-50%); bottom: 18px; background: #fff; border:1px solid #ddd; padding:12px; border-radius:8px; box-shadow:0 6px 18px rgba(0,0,0,.06); font-family:system-ui,Arial,sans-serif; z-index:9999; }
+#consent.hidden { display:none; }
+#consent .row { display:flex; gap:8px; align-items:center; }
+#consent button { padding:8px 10px; border-radius:6px; border:1px solid #ccc; background:#f9f9f9; cursor:pointer; }
+#consent .message { margin-right:12px; }
+@media (max-width:720px){ #consent { width:90%; left:50%; } }

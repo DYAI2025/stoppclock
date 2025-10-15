@@ -299,13 +299,9 @@ export default function PomodoroTimer() {
 
         <Card>
           <CardContent className="p-6">
-            <h3 className="text-lg font-bold mb-2 text-alarm">
-              Über diesen Timer
-            </h3>
+            <h3 className="text-lg font-bold mb-2 text-alarm">About this timer</h3>
             <p className="text-muted-foreground">
-              Ein visueller 60-Sekunden-Timer mit analoger Anzeige. Die letzten
-              10 Sekunden blinken rot zur Warnung. Perfekt für kurze Aufgaben,
-              Präsentationen oder Spiele.
+              A visual 60‑second timer with analog display. The last 10 seconds blink red as a warning. Perfect for short tasks, presentations or games.
             </p>
           </CardContent>
         </Card>

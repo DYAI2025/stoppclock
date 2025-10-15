@@ -5,6 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { FullscreenButton } from "@/components/FullscreenButton";
 import { Link } from "react-router-dom";
 import { useTimerContext } from "@/contexts/TimerContext";
+import SEO from "@/components/SEO";
+import CrossLinks from "@/components/CrossLinks";
 
 export default function Stopwatch() {
   const { updateTimer, getTimer, removeTimer } = useTimerContext();
@@ -57,6 +59,19 @@ export default function Stopwatch() {
   if (isFullscreen) {
     return (
       <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gradient-to-br from-stopwatch/5 to-stopwatch/20 p-4">
+        <SEO
+          title="Online Stopwatch – Precise timer with lap times | Stoppclock"
+          description="Free online stopwatch with lap times, fullscreen mode and clear display. Perfect for sports, study and workouts."
+          keywords={["online stopwatch","stopwatch","lap times","timer","fullscreen"]}
+          jsonLd={[
+            {"@context":"https://schema.org","@type":"WebApplication","name":"Online Stopwatch","url":"https://stoppclock.com/stopwatch","applicationCategory":"UtilitiesApplication"},
+            {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+              {"@type":"Question","name":"Does the stopwatch keep running in the background?","acceptedAnswer":{"@type":"Answer","text":"Yes. Timers continue while you browse other tools. The active timer bar shows your running stopwatch so you can jump back instantly."}},
+              {"@type":"Question","name":"How do I go fullscreen?","acceptedAnswer":{"@type":"Answer","text":"Use the fullscreen button for a distraction‑free, large display."}},
+              {"@type":"Question","name":"Is it free and private?","acceptedAnswer":{"@type":"Answer","text":"Yes. It’s free. Analytics/ads load only with consent (adjust anytime via the footer)."}}
+            ]}
+          ]}
+        />
         <div className="w-full max-w-6xl flex flex-col items-center space-y-12">
           <h1 className="text-4xl font-bold text-stopwatch">Stopwatch</h1>
           <div className="timer-display text-[12rem] md:text-[16rem] font-bold text-stopwatch leading-none">
@@ -99,6 +114,19 @@ export default function Stopwatch() {
 
   return (
     <div className="min-h-screen bg-gradient-hero p-6">
+      <SEO
+        title="Online Stopwatch – Precise timer with lap times | Stoppclock"
+        description="Free online stopwatch with lap times, fullscreen mode and clear display. Perfect for sports, study and workouts." 
+        keywords={["online stopwatch","stopwatch","lap times","timer","fullscreen"]}
+        jsonLd={[
+          {"@context":"https://schema.org","@type":"WebApplication","name":"Online Stopwatch","url":"https://stoppclock.com/stopwatch","applicationCategory":"UtilitiesApplication"},
+          {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+            {"@type":"Question","name":"Does the stopwatch keep running in the background?","acceptedAnswer":{"@type":"Answer","text":"Yes. Timers continue while you browse other tools. The active timer bar shows your running stopwatch so you can jump back instantly."}},
+            {"@type":"Question","name":"How do I go fullscreen?","acceptedAnswer":{"@type":"Answer","text":"Use the fullscreen button for a distraction‑free, large display."}},
+            {"@type":"Question","name":"Is it free and private?","acceptedAnswer":{"@type":"Answer","text":"Yes. It’s free. Analytics/ads load only with consent (you can adjust anytime via the footer)."}}
+          ]}
+        ]}
+      />
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <Link to="/">
@@ -183,6 +211,8 @@ export default function Stopwatch() {
             </CardContent>
           </Card>
         )}
+
+        <CrossLinks />
       </div>
     </div>
   );

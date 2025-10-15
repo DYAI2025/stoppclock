@@ -11,6 +11,8 @@ import {
 import { ToolCard } from "@/components/ToolCard";
 import { ActiveTimerBar } from "@/components/ActiveTimerBar";
 import { useTimerContext } from "@/contexts/TimerContext";
+import SEO from "@/components/SEO";
+import { useI18n } from "@/contexts/I18nContext";
 
 const tools = [
   {
@@ -73,9 +75,21 @@ const tools = [
 
 export default function Index() {
   const { activeTimers } = useTimerContext();
+  const { t } = useI18n();
 
   return (
     <div className="min-h-screen bg-gradient-hero">
+      <SEO
+        title="Stoppclock – Online Stopwatch, Countdown, Alarm Clock, Digital Clock, Chess Clock"
+        description="Free online tools: stopwatch, countdown timer, interval timer, alarm clock, digital clock and chess clock. Minimal, fast, fullscreen‑ready."
+        keywords={["online stopwatch","countdown timer","alarm clock","digital clock","chess clock","interval timer","timer"]}
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "Stoppclock",
+          url: "https://stoppclock.com/",
+        }}
+      />
       <div
         className={`container mx-auto px-4 py-12 space-y-12 transition-all duration-300 ${
           activeTimers.length > 0 ? "pb-64" : "pb-12"
@@ -104,19 +118,10 @@ export default function Index() {
 
         {activeTimers.length === 0 && (
           <div className="text-center p-8 rounded-2xl bg-muted/30 border border-border/50 max-w-2xl mx-auto">
-            <p className="text-sm text-muted-foreground">
-              💡 Starten Sie einen Timer und kehren Sie hierher zurück – er
-              läuft sichtbar weiter!
-            </p>
+            <p className="text-sm text-muted-foreground">💡 {t("hint.startTimer")}</p>
           </div>
         )}
 
-        <footer className="text-center text-sm text-muted-foreground pt-12 border-t">
-          <p>
-            Alle Timer verfügen über einen Vollbildmodus für maximale
-            Sichtbarkeit
-          </p>
-        </footer>
       </div>
 
       <ActiveTimerBar />

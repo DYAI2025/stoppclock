@@ -3,27 +3,31 @@ User-agent: *
 Allow: /
 
 # Sitemaps
-Sitemap: https://stoppclock.com/sitemap.xml
+Sitemap: https://www.stoppclock.com/sitemap.xml
 
 # Google AdSense
 User-agent: Mediapartners-Google
 Allow: /
 
-# Block AI Crawlers (optional - protect your content)
+# AI Crawlers — Allowed
+User-agent: Google-Extended
+Allow: /
+
 User-agent: GPTBot
-Disallow: /
+Allow: /
 
 User-agent: ChatGPT-User
-Disallow: /
-
-User-agent: Google-Extended
-Disallow: /
-
-User-agent: CCBot
-Disallow: /
+Allow: /
 
 User-agent: anthropic-ai
-Disallow: /
+Allow: /
 
 User-agent: Claude-Web
-Disallow: /
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+# Common Crawl (used by many AI systems)
+User-agent: CCBot
+Allow: /

@@ -5,9 +5,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { FullscreenButton } from "@/components/FullscreenButton";
 import { Link } from "react-router-dom";
 import { useTimerContext } from "@/contexts/TimerContext";
+import { useI18n } from "@/contexts/I18nContext";
 
 export default function LapTimer() {
   const { updateTimer, getTimer, removeTimer } = useTimerContext();
+  const { t } = useI18n();
   const timerId = "lap-1";
   const existingTimer = getTimer(timerId);
   
@@ -89,7 +91,7 @@ export default function LapTimer() {
     return (
       <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gradient-to-br from-lap/5 to-lap/20 p-4">
         <div className="w-full max-w-6xl flex flex-col items-center space-y-12">
-          <h1 className="text-4xl font-bold text-lap">Lap Timer</h1>
+          <h1 className="text-4xl font-bold text-lap">{t('lap.title')}</h1>
           <div className="timer-display text-[12rem] md:text-[16rem] font-bold text-lap leading-none">
             {formatTime(time)}
           </div>
@@ -135,10 +137,10 @@ export default function LapTimer() {
           <Link to="/">
             <Button variant="ghost" className="gap-2">
               <Home className="w-5 h-5" />
-              Home
+              {t('common.home')}
             </Button>
           </Link>
-          <h1 className="text-3xl font-bold text-lap">Lap Timer</h1>
+          <h1 className="text-3xl font-bold text-lap">{t('lap.title')}</h1>
           <div className="w-24" />
         </div>
 
@@ -158,12 +160,12 @@ export default function LapTimer() {
                 {isRunning ? (
                   <>
                     <Pause className="w-5 h-5" />
-                    Pause
+                    {t('common.pause')}
                   </>
                 ) : (
                   <>
                     <Play className="w-5 h-5" />
-                    Start
+                    {t('common.start')}
                   </>
                 )}
               </Button>
@@ -175,7 +177,7 @@ export default function LapTimer() {
                 style={{ borderColor: `hsl(var(--lap))`, color: `hsl(var(--lap))` }}
               >
                 <RotateCcw className="w-5 h-5" />
-                Reset
+                {t('common.reset')}
               </Button>
               <Button
                 onClick={handleLap}
@@ -186,7 +188,7 @@ export default function LapTimer() {
                 style={{ borderColor: `hsl(var(--lap))`, color: `hsl(var(--lap))` }}
               >
                 <Flag className="w-5 h-5" />
-                Record Lap
+                {t('lap.record')}
               </Button>
             </div>
 
@@ -197,19 +199,19 @@ export default function LapTimer() {
         {laps.length > 0 && (
           <Card>
             <CardContent className="p-6">
-              <h2 className="text-xl font-bold mb-4 text-lap">Lap Times</h2>
+              <h2 className="text-xl font-bold mb-4 text-lap">{t('lap.times')}</h2>
               <div className="space-y-2 max-h-96 overflow-y-auto">
                 {laps.map((lap, index) => (
                   <div
                     key={index}
                     className="grid grid-cols-3 gap-4 p-3 bg-muted rounded-lg"
                   >
-                    <span className="font-medium">Lap {laps.length - index}</span>
+                    <span className="font-medium">{t('lap.lap')} {laps.length - index}</span>
                     <span className="timer-display text-lg font-bold text-lap text-center">
                       {formatTime(lap.split)}
                     </span>
                     <span className="timer-display text-sm text-muted-foreground text-right">
-                      Total: {formatTime(lap.time)}
+                      {t('lap.total')}: {formatTime(lap.time)}
                     </span>
                   </div>
                 ))}

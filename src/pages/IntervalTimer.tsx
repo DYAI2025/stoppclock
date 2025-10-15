@@ -6,9 +6,11 @@ import { Input } from "@/components/ui/input";
 import { FullscreenButton } from "@/components/FullscreenButton";
 import { Link } from "react-router-dom";
 import { useTimerContext } from "@/contexts/TimerContext";
+import { useI18n } from "@/contexts/I18nContext";
 
 export default function IntervalTimer() {
   const { updateTimer, getTimer, removeTimer } = useTimerContext();
+  const { t } = useI18n();
   const timerId = "interval-1";
   const existingTimer = getTimer(timerId);
   
@@ -104,14 +106,14 @@ export default function IntervalTimer() {
       >
         <div className="w-full max-w-6xl flex flex-col items-center space-y-12">
           <h1 className="text-4xl font-bold" style={{ color: `hsl(var(--${currentColor}))` }}>
-            {isWorking ? 'Work Time' : 'Rest Time'}
+            {isWorking ? t('interval.workTime') : t('interval.restTime')}
           </h1>
           <div className="timer-display text-[12rem] md:text-[16rem] font-bold leading-none" 
             style={{ color: `hsl(var(--${currentColor}))` }}
           >
             {formatTime(currentTime)}
           </div>
-          <p className="text-2xl font-medium text-muted-foreground">Rounds completed: {rounds}</p>
+          <p className="text-2xl font-medium text-muted-foreground">{t('interval.roundsCompleted', { r: rounds })}</p>
           <div className="flex gap-6">
             <Button
               onClick={handleStartPause}
@@ -144,7 +146,7 @@ export default function IntervalTimer() {
           <Link to="/">
             <Button variant="ghost" className="gap-2">
               <Home className="w-5 h-5" />
-              Home
+              {t('common.home')}
             </Button>
           </Link>
           <h1 className="text-3xl font-bold text-interval">Interval Timer</h1>
@@ -155,7 +157,7 @@ export default function IntervalTimer() {
           <CardContent className="p-8 space-y-8">
             <div className="text-center space-y-4">
               <p className="text-2xl font-bold" style={{ color: `hsl(var(--${currentColor}))` }}>
-                {isWorking ? 'Work Time' : 'Rest Time'}
+                {isWorking ? t('interval.workTime') : t('interval.restTime')}
               </p>
               <div className="timer-display text-7xl md:text-8xl font-bold" 
                 style={{ color: `hsl(var(--${currentColor}))` }}
@@ -175,12 +177,12 @@ export default function IntervalTimer() {
                 {isRunning ? (
                   <>
                     <Pause className="w-5 h-5" />
-                    Pause
+                    {t('common.pause')}
                   </>
                 ) : (
                   <>
                     <Play className="w-5 h-5" />
-                    Start
+                    {t('common.start')}
                   </>
                 )}
               </Button>
@@ -192,7 +194,7 @@ export default function IntervalTimer() {
                 style={{ borderColor: `hsl(var(--interval))`, color: `hsl(var(--interval))` }}
               >
                 <RotateCcw className="w-5 h-5" />
-                Reset
+                {t('common.reset')}
               </Button>
             </div>
 
@@ -202,10 +204,10 @@ export default function IntervalTimer() {
 
         <Card>
           <CardContent className="p-6 space-y-4">
-            <h2 className="text-xl font-bold text-interval">Configure Intervals</h2>
+            <h2 className="text-xl font-bold text-interval">{t('interval.configure')}</h2>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Work Time (seconds)</label>
+                <label className="text-sm font-medium">{t('interval.workSeconds')}</label>
                 <Input
                   type="number"
                   min="1"
@@ -215,7 +217,7 @@ export default function IntervalTimer() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Rest Time (seconds)</label>
+                <label className="text-sm font-medium">{t('interval.restSeconds')}</label>
                 <Input
                   type="number"
                   min="1"

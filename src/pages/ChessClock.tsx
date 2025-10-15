@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
+import SEO from "@/components/SEO";
+import CrossLinks from "@/components/CrossLinks";
 
 export default function ChessClock() {
   const [player1Time, setPlayer1Time] = useState(300000); // 5 minutes
@@ -57,6 +59,20 @@ export default function ChessClock() {
 
   return (
     <div className="min-h-screen bg-gradient-hero p-6">
+      <SEO
+        title="Chess Clock – Online two‑player game timer | Stoppclock"
+        description="Simple online chess clock for two players. Clear display with start/stop and switching — ideal for training or casual games."
+        keywords={["chess clock","chess timer","two player timer","game timer"]}
+        jsonLd={[
+          {"@context":"https://schema.org","@type":"WebApplication","name":"Chess Clock","url":"https://stoppclock.com/chess","applicationCategory":"UtilitiesApplication"},
+          {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+            {"@type":"Question","name":"Is this suitable for casual games?","acceptedAnswer":{"@type":"Answer","text":"Yes, it’s designed for quick casual and training games with a clean, readable layout."}},
+            {"@type":"Question","name":"Does it work offline?","acceptedAnswer":{"@type":"Answer","text":"Core pages are cached after your first visit or installation (PWA)."}},
+            {"@type":"Question","name":"Is it free?","acceptedAnswer":{"@type":"Answer","text":"Yes. Stoppclock is free. Analytics/ads only load with consent."}}
+          ]}
+        ]}
+      />
+      <CrossLinks />
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <Link to="/">

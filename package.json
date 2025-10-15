@@ -5,7 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:local": "HOST=127.0.0.1 PORT=5173 vite --host 127.0.0.1 --port 5173",
+    "dev:8080": "HOST=127.0.0.1 PORT=8080 vite --host 127.0.0.1 --port 8080",
     "build": "vite build",
+    "preview:8080": "vite preview --host 127.0.0.1 --port 8080",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview"

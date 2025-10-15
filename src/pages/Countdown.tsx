@@ -5,6 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { FullscreenButton } from "@/components/FullscreenButton";
 import { Link } from "react-router-dom";
+import SEO from "@/components/SEO";
+import CrossLinks from "@/components/CrossLinks";
 import { useTimerContext } from "@/contexts/TimerContext";
 
 export default function Countdown() {
@@ -143,6 +145,20 @@ export default function Countdown() {
 
   return (
     <div className="min-h-screen bg-gradient-hero p-6">
+      <SEO
+        title="Countdown Timer – Simple online countdown | Stoppclock"
+        description="Fast and reliable online countdown. Set custom times, clear display, fullscreen — perfect for presentations, exams and events."
+        keywords={["countdown","countdown timer","online timer","presentation","events"]}
+        jsonLd={[
+          {"@context":"https://schema.org","@type":"WebApplication","name":"Countdown Timer","url":"https://stoppclock.com/countdown","applicationCategory":"UtilitiesApplication"},
+          {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+            {"@type":"Question","name":"Will the countdown alert at zero?","acceptedAnswer":{"@type":"Answer","text":"Yes, the app plays a sound when the timer reaches zero. Keep the tab open and unmuted due to browser restrictions."}},
+            {"@type":"Question","name":"Can I use it fullscreen?","acceptedAnswer":{"@type":"Answer","text":"Yes. Use the fullscreen button for a large, distraction‑free display."}},
+            {"@type":"Question","name":"Does it work offline?","acceptedAnswer":{"@type":"Answer","text":"Core pages are cached after first visit or install (PWA)."}}
+          ]}
+        ]}
+      />
+      <CrossLinks />
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <Link to="/">

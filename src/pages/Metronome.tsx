@@ -5,8 +5,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { FullscreenButton } from "@/components/FullscreenButton";
 import { Link } from "react-router-dom";
+import { useI18n } from "@/contexts/I18nContext";
 
 export default function Metronome() {
+  const { t } = useI18n();
   const [bpm, setBpm] = useState(120);
   const [isRunning, setIsRunning] = useState(false);
   const [beat, setBeat] = useState(0);
@@ -35,11 +37,11 @@ export default function Metronome() {
     return (
       <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gradient-to-br from-metronome/5 to-metronome/20 p-4">
         <div className="w-full max-w-6xl flex flex-col items-center space-y-12">
-          <h1 className="text-4xl font-bold text-metronome">Metronome</h1>
+          <h1 className="text-4xl font-bold text-metronome">{t('metronome.title')}</h1>
           <div className="timer-display text-[12rem] md:text-[16rem] font-bold text-metronome leading-none">
             {bpm}
           </div>
-          <p className="text-3xl text-muted-foreground">BPM</p>
+          <p className="text-3xl text-muted-foreground">{t('metronome.bpm')}</p>
           <div className="w-full max-w-2xl flex justify-center gap-8 mb-8">
             {[0, 1, 2, 3].map((i) => (
               <div
@@ -76,10 +78,10 @@ export default function Metronome() {
           <Link to="/">
             <Button variant="ghost" className="gap-2">
               <Home className="w-5 h-5" />
-              Home
+              {t('common.home')}
             </Button>
           </Link>
-          <h1 className="text-3xl font-bold text-metronome">Metronome</h1>
+          <h1 className="text-3xl font-bold text-metronome">{t('metronome.title')}</h1>
           <div className="w-24" />
         </div>
 
@@ -89,7 +91,7 @@ export default function Metronome() {
               <div className="timer-display text-7xl md:text-8xl font-bold text-metronome">
                 {bpm}
               </div>
-              <p className="text-2xl text-muted-foreground">BPM</p>
+              <p className="text-2xl text-muted-foreground">{t('metronome.bpm')}</p>
             </div>
 
             <div className="flex justify-center gap-4 mb-8">
@@ -131,12 +133,12 @@ export default function Metronome() {
                 {isRunning ? (
                   <>
                     <Pause className="w-5 h-5" />
-                    Stop
+                    {t('common.stop')}
                   </>
                 ) : (
                   <>
                     <Play className="w-5 h-5" />
-                    Start
+                    {t('common.start')}
                   </>
                 )}
               </Button>

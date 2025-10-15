@@ -5,8 +5,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Link } from "react-router-dom";
+import SEO from "@/components/SEO";
+import CrossLinks from "@/components/CrossLinks";
 import { useTimerContext } from "@/contexts/TimerContext";
 import { toast } from "sonner";
+import { useI18n } from "@/contexts/I18nContext";
 
 interface Alarm {
   id: string;
@@ -19,6 +22,7 @@ const STORAGE_KEY = "quick-times-alarms";
 
 export default function AlarmClock() {
   const { updateTimer, removeTimer } = useTimerContext();
+  const { t } = useI18n();
   const [alarms, setAlarms] = useState<Alarm[]>([]);
   const [newTime, setNewTime] = useState("12:00");
   const [newLabel, setNewLabel] = useState("");
@@ -71,7 +75,7 @@ export default function AlarmClock() {
       
       alarms.forEach(alarm => {
         if (alarm.enabled && alarm.time === currentTime) {
-          toast.success(`Alarm: ${alarm.label || 'Zeit abgelaufen!'}`, {
+          toast.success(`Alarm: ${alarm.label || 'Time is up!'}`, {
             duration: 10000,
           });
           
@@ -114,7 +118,7 @@ export default function AlarmClock() {
     };
     setAlarms([...alarms, alarm]);
     setNewLabel("");
-    toast.success("Alarm hinzugefügt");
+    toast.success(t("alarm.added"));
   };
 
   const toggleAlarm = (id: string) => {
@@ -123,11 +127,25 @@ export default function AlarmClock() {
 
   const deleteAlarm = (id: string) => {
     setAlarms(alarms.filter(a => a.id !== id));
-    toast.success("Alarm gelöscht");
+    toast.success(t("alarm.deleted"));
   };
 
   return (
     <div className="min-h-screen bg-gradient-hero p-6">
+      <SEO
+        title="Alarm Clock – Simple online alarms | Stoppclock"
+        description="Set alarms with a clear, minimal interface — optionally fullscreen. Great for focus sessions and breaks."
+        keywords={["alarm clock","online alarm","reminder","timer"]}
+        jsonLd={[
+          {"@context":"https://schema.org","@type":"WebApplication","name":"Alarm Clock","url":"https://stoppclock.com/alarm","applicationCategory":"UtilitiesApplication"},
+          {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+            {"@type":"Question","name":"Do alarms work if I switch tabs?","acceptedAnswer":{"@type":"Answer","text":"Yes, but keep the tab open and unmuted for reliable playback due to browser limits."}},
+            {"@type":"Question","name":"Can I use fullscreen?","acceptedAnswer":{"@type":"Answer","text":"Yes. Use the fullscreen button for a distraction‑free alarm screen."}},
+            {"@type":"Question","name":"Is it free?","acceptedAnswer":{"@type":"Answer","text":"Yes. Stoppclock is free. Analytics/ads only load with consent."}}
+          ]}
+        ]}
+      />
+      <CrossLinks />
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <Link to="/">
@@ -142,7 +160,7 @@ export default function AlarmClock() {
 
         <Card className="border-2" style={{ borderColor: `hsl(var(--alarm))` }}>
           <CardContent className="p-6 space-y-4">
-            <h2 className="text-xl font-bold text-alarm">Neuen Alarm hinzufügen</h2>
+            <h2 className="text-xl font-bold text-alarm">{t("alarm.addNew")}</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Input
                 type="time"
@@ -162,7 +180,7 @@ export default function AlarmClock() {
                 style={{ backgroundColor: `hsl(var(--alarm))` }}
               >
                 <Plus className="w-5 h-5" />
-                Alarm hinzufügen
+                {t("alarm.add")}
               </Button>
             </div>
           </CardContent>
@@ -173,9 +191,9 @@ export default function AlarmClock() {
             <Card>
               <CardContent className="p-12 text-center">
                 <Bell className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-xl text-muted-foreground">Keine Alarme gesetzt</p>
+                <p className="text-xl text-muted-foreground">{t("alarm.none")}</p>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Fügen Sie einen Alarm hinzu, um benachrichtigt zu werden
+                  {t("alarm.addToGet")}
                 </p>
               </CardContent>
             </Card>
@@ -199,7 +217,7 @@ export default function AlarmClock() {
                         <p className="text-sm text-muted-foreground">{alarm.label}</p>
                         {alarm.enabled && (
                           <p className="text-xs text-muted-foreground mt-1">
-                            In {Math.floor(getTimeUntilAlarm(alarm.time) / 1000 / 60)} Minuten
+                            {t("alarm.inMinutes", { m: Math.floor(getTimeUntilAlarm(alarm.time) / 1000 / 60) })}
                           </p>
                         )}
                       </div>

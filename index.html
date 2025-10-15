@@ -1,8 +1,14 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="icon" type="image/svg+xml" href="icons/stoppclock-logo.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="icons/icon-16.png" />
+    <link rel="alternate icon" href="favicon.ico" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" sizes="180x180" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#f97316" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Stoppclock - Free Online Timer & Clock Toolkit</title>
     <meta
@@ -23,7 +29,7 @@
       content="Professional timer and clock toolkit featuring stopwatch, countdown, alarm clock, and more."
     />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://stoppclock.com" />
+    <meta property="og:url" content="https://www.stoppclock.com" />
     <meta
       property="og:image"
       content="https://lovable.dev/opengraph-image-p98pqg.png"
@@ -75,6 +81,30 @@
 
   <body>
     <div id="root"></div>
+    <div id="fallback" style="font-family:system-ui,Arial,sans-serif;max-width:900px;margin:24px auto;color:#444">
+      <h1 style="margin:0 0 8px">Stoppclock</h1>
+      <p style="margin:0 0 12px">Loading app… If nothing appears, JavaScript may be blocked or the dev server isn’t running.</p>
+      <ul style="margin:0 0 12px; padding-left:18px;">
+        <li>Start locally: <code>npm run dev:8080</code> (or <code>npm run dev</code>)</li>
+        <li>Or preview build: <code>npm run build</code> → <code>npm run preview:8080</code></li>
+      </ul>
+      <p style="margin:0 0 6px">Legal pages (static): <a href="imprint.html">Imprint</a> · <a href="privacy-policy.html">Privacy Policy</a></p>
+    </div>
+    <script type="module">
+      // Avoid service worker interference during local development
+      const isLocal = ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
+      if ('serviceWorker' in navigator) {
+        if (isLocal) {
+          // Unregister any existing SWs to prevent stale caches during dev
+          navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister())).catch(() => {});
+        } else {
+          window.addEventListener('load', () => {
+            const swUrl = new URL('sw.js', import.meta.url);
+            navigator.serviceWorker.register(swUrl).catch(() => {});
+          });
+        }
+      }
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

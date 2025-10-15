@@ -10,17 +10,19 @@ import {
   Timer as TimerIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/contexts/I18nContext";
 import { Badge } from "@/components/ui/badge";
 
 export const ActiveTimerBar = () => {
   const { activeTimers, removeTimer } = useTimerContext();
   const navigate = useNavigate();
+  const { t, locale } = useI18n();
 
   const formatTime = (ms: number, type: string, timerName?: string) => {
     // Special handling for clocks - display as actual time
-    if (timerName?.startsWith("Uhr -")) {
+    if (timerName?.startsWith("Clock -") || timerName?.startsWith("Uhr -")) {
       const date = new Date(ms);
-      return date.toLocaleTimeString("de-DE", {
+      return date.toLocaleTimeString(locale, {
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit",
@@ -85,7 +87,7 @@ export const ActiveTimerBar = () => {
           <div className="flex items-center gap-2">
             <div className="h-1 w-8 rounded-full bg-primary/40" />
             <h3 className="text-sm font-semibold text-foreground/80 tracking-wide uppercase">
-              Aktive Timer
+              {t("bar.active")}
             </h3>
             <Badge variant="secondary" className="text-xs px-2 py-0.5">
               {displayTimers.length}
@@ -93,7 +95,7 @@ export const ActiveTimerBar = () => {
           </div>
           {hasMoreTimers && (
             <span className="text-xs text-muted-foreground italic">
-              +{activeTimers.length - 3} weitere
+              +{activeTimers.length - 3} {t("bar.more")}
             </span>
           )}
         </div>
@@ -167,7 +169,7 @@ export const ActiveTimerBar = () => {
                             color: `hsl(var(--${timer.color}))`,
                           }}
                         >
-                          {timer.isWorking ? "Arbeit" : "Pause"}
+                          {timer.isWorking ? t("bar.interval.work") : t("bar.interval.rest")}
                         </Badge>
                       )}
                     </div>
@@ -198,7 +200,7 @@ export const ActiveTimerBar = () => {
                         className="text-[10px] font-medium uppercase tracking-wider"
                         style={{ color: `hsl(var(--${timer.color}) / 0.8)` }}
                       >
-                        Läuft
+                        {t("bar.running")}
                       </span>
                     </div>
                   )}
@@ -231,7 +233,7 @@ export const ActiveTimerBar = () => {
                       className="text-[10px] font-medium"
                       style={{ color: `hsl(var(--${timer.color}) / 0.6)` }}
                     >
-                      Klicken zum Öffnen
+                      {t("bar.clickOpen")}
                     </span>
                   </div>
                 </CardContent>

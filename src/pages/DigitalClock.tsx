@@ -4,7 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FullscreenButton } from "@/components/FullscreenButton";
 import { Link } from "react-router-dom";
+import SEO from "@/components/SEO";
+import CrossLinks from "@/components/CrossLinks";
 import { useTimerContext } from "@/contexts/TimerContext";
+import { useI18n } from "@/contexts/I18nContext";
 
 const TIMEZONES = [
   { name: "Berlin", timezone: "Europe/Berlin" },
@@ -30,6 +33,7 @@ export default function DigitalClock() {
   const [timezoneIndex, setTimezoneIndex] = useState(0);
 
   const currentTimezone = TIMEZONES[timezoneIndex];
+  const { t, locale } = useI18n();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -43,16 +47,16 @@ export default function DigitalClock() {
     updateTimer({
       id: timerId,
       type: "stopwatch", // Use stopwatch type for display
-      name: `Uhr - ${currentTimezone.name}`,
+      name: `${t("clock.namePrefix")} ${currentTimezone.name}`,
       color: "clock",
       currentTime: time.getTime(),
       isRunning: true,
       path: "/clock",
     });
-  }, [time, currentTimezone, updateTimer, timerId]);
+  }, [time, currentTimezone, updateTimer, timerId, t]);
 
   const formatTime = () => {
-    return time.toLocaleTimeString('de-DE', { 
+    return time.toLocaleTimeString(locale, { 
       hour: '2-digit', 
       minute: '2-digit', 
       second: '2-digit',
@@ -62,7 +66,7 @@ export default function DigitalClock() {
   };
 
   const formatDate = () => {
-    return time.toLocaleDateString('de-DE', { 
+    return time.toLocaleDateString(locale, { 
       weekday: 'long', 
       year: 'numeric', 
       month: 'long', 
@@ -96,7 +100,7 @@ export default function DigitalClock() {
             style={{ backgroundColor: `hsl(var(--clock))` }}
           >
             <Globe className="w-6 h-6" />
-            Zeitzone wechseln
+            {t("clock.switch")}
           </Button>
           <FullscreenButton isFullscreen={isFullscreen} onToggle={toggleFullscreen} color="clock" />
         </div>
@@ -106,6 +110,20 @@ export default function DigitalClock() {
 
   return (
     <div className="min-h-screen bg-gradient-hero p-6">
+      <SEO
+        title="Digital Clock – Online time (local & international) | Stoppclock"
+        description="Large digital clock for your screen. Ideal as a wall‑screen clock; helpful for planning across time zones (switch between cities/zones)."
+        keywords={["digital clock","online clock","time","world time","time zones"]}
+        jsonLd={[
+          {"@context":"https://schema.org","@type":"WebApplication","name":"Digital Clock","url":"https://stoppclock.com/clock","applicationCategory":"UtilitiesApplication"},
+          {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+            {"@type":"Question","name":"Can I switch between time zones?","acceptedAnswer":{"@type":"Answer","text":"Yes. Switch between cities/time zones directly on the page."}},
+            {"@type":"Question","name":"Is there a fullscreen mode?","acceptedAnswer":{"@type":"Answer","text":"Yes. Use the fullscreen button for a clean, large clock display."}},
+            {"@type":"Question","name":"Does it work offline?","acceptedAnswer":{"@type":"Answer","text":"Core pages are cached after the first visit or when installed (PWA)."}}
+          ]}
+        ]}
+      />
+      <CrossLinks />
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <Link to="/">
@@ -139,7 +157,7 @@ export default function DigitalClock() {
                 style={{ backgroundColor: `hsl(var(--clock))` }}
               >
                 <Globe className="w-5 h-5" />
-                Zeitzone wechseln
+                {t("clock.switch")}
               </Button>
             </div>
 
@@ -149,7 +167,7 @@ export default function DigitalClock() {
 
         <Card>
           <CardContent className="p-6">
-            <h3 className="text-lg font-bold mb-4 text-clock">Verfügbare Zeitzonen</h3>
+            <h3 className="text-lg font-bold mb-4 text-clock">{t("clock.available")}</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
               {TIMEZONES.map((tz, index) => (
                 <Button

@@ -5,8 +5,8 @@ Enthält vorbereitete Dateien, die du in dein Projekt kopieren und committen kan
 - `public/CNAME` → enthält `www.stopclock.com`
 - `public/ads.txt` → enthält deine Publisher-ID für Google (wichtig für AdSense)
 - `.github/workflows/deploy.yml` → GitHub Action, die `npm run build` ausführt und `dist/` nach `gh-pages` deployed
-- `public/consent/consent.js` + `public/consent/consent.css` → kleines Consent-Snippet zum Laden von GA4 & AdSense nach Zustimmung
-- `public/privacy.html`, `public/impressum.html` → Minimalvorlagen (bitte anpassen!)
+- `public/consent/consent.js` + `public/consent/consent.css` → kleines Consent-Snippet zum Laden von GA4 & AdSense nach Zustimmung (liegen in `public/`, werden zur Laufzeit unter `/consent/consent.js` bzw. `/consent/consent.css` ausgeliefert)
+- `public/privacy.html`, `public/impressum.html` → Minimalvorlagen (bitte anpassen!) (liegen in `public/`, werden zur Laufzeit unter `/privacy.html` bzw. `/impressum.html` ausgeliefert)
 
 ## Schritte (kurz)
 1. Kopiere die Dateien in dein Repo (z. B. unter `quick-times-main/`). Commit & push.

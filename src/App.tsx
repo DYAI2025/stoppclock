@@ -23,7 +23,21 @@ import LanguageToggle from "@/components/LanguageToggle";
 
 const queryClient = new QueryClient();
 
-declare global { interface Window { __APP_MOUNTED?: boolean } }
+declare global {
+  interface Window {
+    __APP_MOUNTED?: boolean;
+    __APP_BASE_PATH__?: string;
+  }
+}
+
+const basePath = (() => {
+  if (typeof window === "undefined") return "/";
+  const path = new URL("./", window.location.href).pathname;
+  const trimmed = path.endsWith("/") && path !== "/" ? path.slice(0, -1) : path;
+  const resolved = trimmed || "/";
+  window.__APP_BASE_PATH__ = resolved;
+  return resolved;
+})();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -36,7 +50,7 @@ const App = () => (
         <Sonner />
         <CookieBanner />
         <LanguageToggle />
-        <BrowserRouter>
+        <BrowserRouter basename={basePath}>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/stopwatch" element={<Stopwatch />} />

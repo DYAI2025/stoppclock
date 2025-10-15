@@ -180,9 +180,10 @@
       }
     </script>
     <script type="module">
-      const isLocalHost = ["localhost", "127.0.0.1", "::1"].includes(
-        window.location.hostname
-      );
+      const localHosts = ["localhost", "127.0.0.1", "::1"];
+      const isLocalHost = localHosts.includes(window.location.hostname);
+      const baseUrl = new URL("./", window.location.href);
+
       async function boot() {
         if (isLocalHost) {
           try {
@@ -193,16 +194,21 @@
           }
         }
         try {
-          const res = await fetch("/manifest.json", { cache: "no-store" });
+          const manifestUrl = new URL("manifest.json", baseUrl);
+          const res = await fetch(manifestUrl, { cache: "no-store" });
           if (!res.ok) throw new Error("manifest missing");
           const m = await res.json();
           const entry = Object.values(m).find((x) => x && x.isEntry)?.file;
           if (!entry) throw new Error("no entry");
-          await import("/" + entry);
+          const entryUrl = new URL(entry, baseUrl);
+          await import(entryUrl.href);
           window.__APP_MOUNTED = true;
         } catch (err) {
           // Last resort: try dev import (may fail on Pages, but at least attempts)
-          try { await import("/src/main.tsx"); } catch {}
+          try {
+            const fallbackUrl = new URL("src/main.tsx", baseUrl);
+            await import(fallbackUrl.href);
+          } catch {}
         }
       }
       boot();

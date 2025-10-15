@@ -121,7 +121,7 @@
         if (!root || !fallback) return;
 
         const cleanup = () => {
-          observer?.disconnect();
+          observer.disconnect();
           window.removeEventListener("load", onLoad);
         };
 

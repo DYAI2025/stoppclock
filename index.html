@@ -114,6 +114,49 @@
         <a href="privacy-policy.html">Privacy Policy</a>
       </p>
     </div>
+    <script>
+      (function ensureFallbackHides() {
+        const root = document.getElementById("root");
+        const fallback = document.getElementById("fallback");
+        if (!root || !fallback) return;
+
+        const cleanup = () => {
+          observer?.disconnect();
+          window.removeEventListener("load", onLoad);
+        };
+
+        const hideFallback = () => {
+          fallback.style.display = "none";
+          cleanup();
+        };
+
+        const onLoad = () => {
+          if (root.childElementCount > 0 || window.__APP_MOUNTED) {
+            hideFallback();
+          }
+        };
+
+        if (window.__APP_MOUNTED) {
+          hideFallback();
+          return;
+        }
+
+        const observer = new MutationObserver(() => {
+          if (root.childElementCount > 0) {
+            hideFallback();
+          }
+        });
+
+        observer.observe(root, { childList: true });
+        window.addEventListener("load", onLoad);
+
+        setTimeout(() => {
+          if (root.childElementCount > 0 || window.__APP_MOUNTED) {
+            hideFallback();
+          }
+        }, 1500);
+      })();
+    </script>
     <script type="module">
       // Avoid service worker interference during local development
       const isLocal = ["localhost", "127.0.0.1", "::1"].includes(

@@ -179,6 +179,33 @@
         }
       }
     </script>
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module">
+      const isLocalHost = ["localhost", "127.0.0.1", "::1"].includes(
+        window.location.hostname
+      );
+      async function boot() {
+        if (isLocalHost) {
+          try {
+            await import("/src/main.tsx");
+            return;
+          } catch (e) {
+            // ignore; fall through to manifest
+          }
+        }
+        try {
+          const res = await fetch("/manifest.json", { cache: "no-store" });
+          if (!res.ok) throw new Error("manifest missing");
+          const m = await res.json();
+          const entry = Object.values(m).find((x) => x && x.isEntry)?.file;
+          if (!entry) throw new Error("no entry");
+          await import("/" + entry);
+          window.__APP_MOUNTED = true;
+        } catch (err) {
+          // Last resort: try dev import (may fail on Pages, but at least attempts)
+          try { await import("/src/main.tsx"); } catch {}
+        }
+      }
+      boot();
+    </script>
   </body>
 </html>

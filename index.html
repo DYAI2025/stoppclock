@@ -150,11 +150,13 @@
         observer.observe(root, { childList: true });
         window.addEventListener("load", onLoad);
 
+        // Fallback timeout: Hide the fallback UI after 1.5s in case the app mounts late or JS is slow to load.
+        const FALLBACK_TIMEOUT_MS = 1500;
         setTimeout(() => {
           if (root.childElementCount > 0 || window.__APP_MOUNTED) {
             hideFallback();
           }
-        }, 1500);
+        }, FALLBACK_TIMEOUT_MS);
       })();
     </script>
     <script type="module">

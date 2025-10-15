@@ -1,0 +1,9 @@
+# Ignore all CNAME files (they are DNS config, not markdown)
+CNAME
+**/CNAME
+public/CNAME
+stoppclock_deploy/public/CNAME
+
+# Other non-markdown files that might trigger false positives
+*.lockb
+*.zip

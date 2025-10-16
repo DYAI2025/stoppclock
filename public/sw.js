@@ -1,137 +1,101 @@
-/* Stoppclock service worker for GitHub Pages */
-const CACHE_NAME = "stoppclock-v2";
+/* Stoppclock Service Worker - GitHub Pages Edition */
+const CACHE_NAME = "stoppclock-v3";
 const MANIFEST_URL = "./manifest.json";
 const CORE_ASSETS = [
-  "./",
-  "./index.html",
-  "./manifest.webmanifest",
-  "./manifest.json",
-  "./favicon.ico",
-  "./icons/stoppclock-logo.svg",
-  "./icons/icon-32.png",
-  "./icons/icon-16.png",
-  "./icons/apple-touch-icon.png",
+    "./",
+    "./index.html",
+    "./manifest.webmanifest",
+    "./favicon.ico",
+    "./icons/stoppclock-logo.svg",
+    "./icons/icon-32.png",
+    "./icons/icon-16.png",
+    "./icons/apple-touch-icon.png",
 ];
 
 async function resolveBuildAssets() {
-  try {
-    const res = await fetch(MANIFEST_URL, { cache: "no-store" });
-    if (!res.ok) {
-      throw new Error("manifest.json missing");
-    }
+    try {
+        const manifestRes = await fetch(MANIFEST_URL, { cache: "no-store" });
+        if (!manifestRes.ok) {
+            console.warn("SW: manifest.json not found, skipping asset resolution");
+            return [];
+        }
+        const manifest = await manifestRes.json();
+        const assets = new Set();
 
-    const manifest = await res.json();
-    const seen = new Set();
-    const assets = new Set();
-
-    function collect(key) {
-      if (!key || seen.has(key)) {
-        return;
-      }
-      seen.add(key);
-      const entry = manifest[key];
-      if (!entry || typeof entry !== "object") {
-        return;
-      }
-
-      if (entry.file) {
-        assets.add(`./${entry.file}`);
-      }
-      if (Array.isArray(entry.css)) {
-        entry.css.forEach((cssFile) => assets.add(`./${cssFile}`));
-      }
-      if (Array.isArray(entry.assets)) {
-        entry.assets.forEach((assetFile) => assets.add(`./${assetFile}`));
-      }
-      if (Array.isArray(entry.imports)) {
-        entry.imports.forEach((nextKey) => collect(nextKey));
-      }
-      if (Array.isArray(entry.dynamicImports)) {
-        entry.dynamicImports.forEach((nextKey) => collect(nextKey));
-      }
-    }
-
-    collect("index.html");
-    Object.keys(manifest).forEach((key) => collect(key));
-
-    return Array.from(assets);
-  } catch (error) {
-    console.warn("SW: Unable to resolve build assets", error);
-    return [];
-  }
-}
-
-self.addEventListener("install", (event) => {
-  self.skipWaiting();
-  event.waitUntil(
-    (async () => {
-      const cache = await caches.open(CACHE_NAME);
-      const buildAssets = await resolveBuildAssets();
-      const toCache = Array.from(new Set([...CORE_ASSETS, ...buildAssets]));
-
-      try {
-        await cache.addAll(toCache);
-      } catch (error) {
-        console.warn("SW: Failed to precache some assets", error);
-        await Promise.all(
-          toCache.map(async (url) => {
-            try {
-              const response = await fetch(url, { cache: "no-store" });
-              if (response && response.ok) {
-                await cache.put(url, response.clone());
-              }
-            } catch (err) {}
-          }),
-        );
-      }
-    })(),
-  );
-});
-
-self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    caches
-      .keys()
-      .then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))))
-      .then(() => self.clients.claim()),
-  );
-});
-
-self.addEventListener("fetch", (event) => {
-  const req = event.request;
-  const url = new URL(req.url);
-
-  if (url.origin !== self.location.origin) {
-    return;
-  }
-
-  if (req.mode === "navigate") {
-    event.respondWith(
-      caches
-        .match("./index.html")
-        .then((cached) => cached || fetch(req))
-        .catch(() => caches.match("./index.html")),
-    );
-    return;
-  }
-
-  if (["script", "style", "image", "font", "manifest"].includes(req.destination)) {
-    event.respondWith(
-      caches.match(req).then((cached) => {
-        if (cached) {
-          return cached;
+        function collectAssets(key, visited = new Set()) {
+            if (!key || visited.has(key)) return;
+            visited.add(key);
+            const entry = manifest[key];
+            if (!entry || typeof entry !== "object") return;
+            if (entry.file) assets.add(`./${entry.file}`);
+            if (Array.isArray(entry.css)) entry.css.forEach(f => assets.add(`./${f}`));
+            if (Array.isArray(entry.assets)) entry.assets.forEach(f => assets.add(`./${f}`));
+            if (Array.isArray(entry.imports)) entry.imports.forEach(k => collectAssets(k, visited));
+            if (Array.isArray(entry.dynamicImports)) entry.dynamicImports.forEach(k => collectAssets(k, visited));
         }
 
-        return fetch(req)
-          .then((networkResponse) => {
-            const responseClone = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(req, responseClone).catch(() => {});
-            });
-            return networkResponse;
-          })
-          .catch(() => new Response("", { status: 500, statusText: "Offline" }));
-      }),
+        collectAssets("index.html");
+        Object.keys(manifest).forEach(key => collectAssets(key));
+        return Array.from(assets);
+    } catch (error) {
+        console.warn("SW: Asset resolution failed", error);
+        return [];
+    }
+}
+
+self.addEventListener("install", event => {
+    self.skipWaiting();
+    event.waitUntil(
+        (async () => {
+            try {
+                const cache = await caches.open(CACHE_NAME);
+                const buildAssets = await resolveBuildAssets();
+                const toCache = [...new Set([...CORE_ASSETS, ...buildAssets])];
+                await cache.addAll(toCache).catch(async error => {
+                    console.warn("SW: Batch cache failed, caching individually", error);
+                    await Promise.all(toCache.map(url => cache.add(url).catch(() => {})));
+                });
+            } catch (err) {
+                console.error("SW: Install failed", err);
+            }
+        })()
     );
-  }
+});
+
+self.addEventListener("activate", event => {
+    event.waitUntil(
+        (async () => {
+            const keys = await caches.keys();
+            await Promise.all(keys.map(key => key !== CACHE_NAME ? caches.delete(key) : null));
+            await self.clients.claim();
+        })()
+    );
+});
+
+self.addEventListener("fetch", event => {
+    const url = new URL(event.request.url);
+    if (url.origin !== self.location.origin) return;
+    const isNavigate = event.request.mode === "navigate";
+    const isAsset = ["script", "style", "image", "font", "manifest"].includes(event.request.destination);
+
+    if (isNavigate) {
+        event.respondWith(
+            caches.match("./index.html", { cacheName: CACHE_NAME }).then(r => r || fetch(event.request)).catch(() => caches.match("./index.html", { cacheName: CACHE_NAME }))
+        );
+        return;
+    }
+
+    if (isAsset) {
+        event.respondWith(
+            caches.match(event.request, { cacheName: CACHE_NAME }).then(cached => cached || fetch(event.request).then(response => {
+                if (response && response.status === 200) {
+                    caches.open(CACHE_NAME).then(c => c.put(event.request, response.clone())).catch(() => {});
+                }
+                return response;
+            })).catch(() => new Response("", { status: 503 }))
+        );
+        return;
+    }
+
+    event.respondWith(fetch(event.request));
 });

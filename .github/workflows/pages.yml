@@ -31,7 +31,7 @@ jobs:
 
       # Artefakt für Pages hochladen (nur dist/)
       - name: Upload Pages Artifact
-        uses: actions/upload-pages-artifact@69d9d6d3a4f1d6a605c60d67e0f15eb71e0c1af8  # v3.0.0 pinned
+        uses: actions/upload-pages-artifact@v3  # Use tag instead of SHA to avoid issues
 
   deploy:
     runs-on: ubuntu-latest
@@ -45,4 +45,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@668f0d2fcf7b7a92d58d3e9e9d6c5b9f27a1de92  # v4.0.0 pinned
+        uses: actions/deploy-pages@v4  # Use tag instead of SHA to avoid issues

@@ -1,92 +1,137 @@
 /* Stoppclock service worker for GitHub Pages */
-const CACHE_NAME = 'stoppclock-v1';
+const CACHE_NAME = "stoppclock-v2";
+const MANIFEST_URL = "./manifest.json";
 const CORE_ASSETS = [
-  './',
-  './index.html',
-  './manifest.webmanifest',
-  './assets/index-DtWKMgRL.js',
-  './assets/main-d8bAOZLc.css',
-  './assets/main-DW3ZJ3Vd.js',
-  './favicon.ico',
-  './icons/stoppclock-logo.svg',
-  './icons/icon-32.png',
-  './icons/icon-16.png',
-  './icons/apple-touch-icon.png'
+  "./",
+  "./index.html",
+  "./manifest.webmanifest",
+  "./manifest.json",
+  "./favicon.ico",
+  "./icons/stoppclock-logo.svg",
+  "./icons/icon-32.png",
+  "./icons/icon-16.png",
+  "./icons/apple-touch-icon.png",
 ];
 
-self.addEventListener('install', (event) => {
+async function resolveBuildAssets() {
+  try {
+    const res = await fetch(MANIFEST_URL, { cache: "no-store" });
+    if (!res.ok) {
+      throw new Error("manifest.json missing");
+    }
+
+    const manifest = await res.json();
+    const seen = new Set();
+    const assets = new Set();
+
+    function collect(key) {
+      if (!key || seen.has(key)) {
+        return;
+      }
+      seen.add(key);
+      const entry = manifest[key];
+      if (!entry || typeof entry !== "object") {
+        return;
+      }
+
+      if (entry.file) {
+        assets.add(`./${entry.file}`);
+      }
+      if (Array.isArray(entry.css)) {
+        entry.css.forEach((cssFile) => assets.add(`./${cssFile}`));
+      }
+      if (Array.isArray(entry.assets)) {
+        entry.assets.forEach((assetFile) => assets.add(`./${assetFile}`));
+      }
+      if (Array.isArray(entry.imports)) {
+        entry.imports.forEach((nextKey) => collect(nextKey));
+      }
+      if (Array.isArray(entry.dynamicImports)) {
+        entry.dynamicImports.forEach((nextKey) => collect(nextKey));
+      }
+    }
+
+    collect("index.html");
+    Object.keys(manifest).forEach((key) => collect(key));
+
+    return Array.from(assets);
+  } catch (error) {
+    console.warn("SW: Unable to resolve build assets", error);
+    return [];
+  }
+}
+
+self.addEventListener("install", (event) => {
   self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(CORE_ASSETS))
-      .catch(() => {
-        // If some assets fail to cache, that's OK for basic functionality
-        console.log('Some assets failed to cache, but continuing...');
-      })
-  );
-});
+    (async () => {
+      const cache = await caches.open(CACHE_NAME);
+      const buildAssets = await resolveBuildAssets();
+      const toCache = Array.from(new Set([...CORE_ASSETS, ...buildAssets]));
 
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys()
-      .then((keys) => {
-        return Promise.all(
-          keys.filter((key) => key !== CACHE_NAME)
-            .map((key) => caches.delete(key))
+      try {
+        await cache.addAll(toCache);
+      } catch (error) {
+        console.warn("SW: Failed to precache some assets", error);
+        await Promise.all(
+          toCache.map(async (url) => {
+            try {
+              const response = await fetch(url, { cache: "no-store" });
+              if (response && response.ok) {
+                await cache.put(url, response.clone());
+              }
+            } catch (err) {}
+          }),
         );
-      })
-      .then(() => self.clients.claim())
+      }
+    })(),
   );
 });
 
-// Handle all requests: return index.html for navigation requests (SPA routing)
-self.addEventListener('fetch', (event) => {
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches
+      .keys()
+      .then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))))
+      .then(() => self.clients.claim()),
+  );
+});
+
+self.addEventListener("fetch", (event) => {
   const req = event.request;
   const url = new URL(req.url);
 
-  // Only handle same-origin requests
-  if (url.origin !== self.location.origin) return;
+  if (url.origin !== self.location.origin) {
+    return;
+  }
 
-  // For navigation requests (HTML), always return index.html to support client-side routing
-  if (req.mode === 'navigate') {
+  if (req.mode === "navigate") {
     event.respondWith(
-      caches.match('./index.html')
+      caches
+        .match("./index.html")
         .then((cached) => cached || fetch(req))
-        .catch(() => caches.match('./index.html'))
+        .catch(() => caches.match("./index.html")),
     );
     return;
   }
 
-  // For static assets (JS, CSS, images, etc.), use cache-first strategy
-  if (req.destination === 'script' || req.destination === 'style' || 
-      req.destination === 'image' || req.destination === 'font' || 
-      req.destination === 'manifest') {
+  if (["script", "style", "image", "font", "manifest"].includes(req.destination)) {
     event.respondWith(
-      caches.match(req)
-        .then((cached) => {
-          // If found in cache, return it
-          if (cached) return cached;
+      caches.match(req).then((cached) => {
+        if (cached) {
+          return cached;
+        }
 
-          // Otherwise fetch from network, cache it, and return
-          return fetch(req)
-            .then((networkResponse) => {
-              // Clone the response to store in cache and return to browser
-              const responseToCache = networkResponse.clone();
-              
-              caches.open(CACHE_NAME)
-                .then((cache) => {
-                  cache.put(req, responseToCache).catch(() => {
-                    // Ignore cache errors - not critical
-                  });
-                });
-                
-              return networkResponse;
-            })
-            .catch(() => {
-              // If both cache and network fail, return error
-              return new Response('', { status: 500, statusText: 'Offline' });
+        return fetch(req)
+          .then((networkResponse) => {
+            const responseClone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(req, responseClone).catch(() => {});
             });
-        })
+            return networkResponse;
+          })
+          .catch(() => new Response("", { status: 500, statusText: "Offline" }));
+      }),
     );
   }
 });

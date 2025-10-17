@@ -37,7 +37,7 @@ done
 # --- index.html: Manifest-Link sicherstellen ---
 if [ -f index.html ]; then
   tmp="$(mktemp)"
-  sed '/<link[^>]*rel=["'"'']manifest["'"''][^>]*>/Id' index.html > "$tmp"
+  sed '/rel=["'\'']manifest["'\'']/Id' index.html > "$tmp"
   awk 'BEGIN{IGNORECASE=1}
     /<\/head>/{
       print "  <link rel=\"manifest\" href=\"/manifest.webmanifest\">"

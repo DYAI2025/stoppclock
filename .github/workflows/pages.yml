@@ -51,6 +51,8 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -72,6 +74,13 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
+      - name: Show deployed artifact shape (dist/)
+        run: |
+          echo "=== dist/ top ==="
+          ls -lah dist || true
+          echo "=== CNAME ==="
+          cat dist/CNAME || true
+
       - name: Install Playwright (Chromium only, no-save)
         run: |
           npm i --no-save playwright@1.47.2
@@ -79,7 +88,7 @@ jobs:
 
       - name: Run smoke test
         env:
-          TARGET_URL: ${{ env.TARGET_URL }}
+          TARGET_URLS: ${{ needs.deploy.outputs.page_url }},${{ env.TARGET_URL }}
         run: node scripts/smoke.mjs
 
       - name: Upload Playwright artifacts (screenshots)

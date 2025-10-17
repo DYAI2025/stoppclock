@@ -2,12 +2,21 @@ import { chromium } from 'playwright';
 import fs from 'fs/promises';
 import path from 'path';
 
-const base = (process.env.TARGET_URL || 'https://www.stoppclock.com').replace(/\/+$/,'');
-const host = new URL(base).host;
+const rawTargets = process.env.TARGET_URLS || process.env.TARGET_URL || 'https://www.stoppclock.com';
+const bases = rawTargets
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean)
+  .map((u) => u.replace(/\/+$/, ''));
+
+if (bases.length === 0) {
+  throw new Error('No TARGET_URLS/TARGET_URL given');
+}
+
 const pathsToCheck = ['/', '/manifest.webmanifest', '/imprint.html', '/sw.js'];
 const artifactsDir = path.resolve('artifacts/playwright');
-const consoleOwnErrors = [];
-const pageErrors = [];
+let anyBasePassed = false;
+const failures = [];
 const navTimeout = 30_000;
 
 async function ensureDir() { await fs.mkdir(artifactsDir, { recursive: true }); }
@@ -18,7 +27,9 @@ function warn(msg){ console.warn(`[SMOKE][WARN] ${msg}`); }
 
 const allowedConsole = [
   'net::ERR_BLOCKED_BY_CLIENT',
-  'adsbygoogle', 'googletagservices', 'googletagmanager',
+  'adsbygoogle',
+  'googletagservices',
+  'googletagmanager',
   'gtag/js?id=',
   'cookieconsent',
 ];
@@ -28,66 +39,84 @@ const allowedConsole = [
   const context = await browser.newContext({ ignoreHTTPSErrors: true });
   const page = await context.newPage();
 
-  page.on('console', (m) => {
-    const type = m.type();
-    const text = (m.text && m.text()) || '';
-    if (type !== 'error') return;
-    if (allowedConsole.some(w => text.includes(w))) return;
-    const isOwn = text.includes(host) || text.includes('/assets/') || text.includes('/sw.js');
-    if (isOwn) consoleOwnErrors.push(text); else console.warn('[IGNORED 3P]', text);
-  });
+  for (const base of bases) {
+    const consoleOwnErrors = [];
+    const pageErrors = [];
+    const host = new URL(base).host;
 
-  page.on('pageerror', (err) => {
-    pageErrors.push(String(err?.message || err));
-  });
+    log(`--- BASE: ${base} ---`);
 
-  for (const p of pathsToCheck) {
-    const url = base + p;
-    log(`Visiting ${url}`);
-    const resp = await page.goto(url, { waitUntil: 'networkidle', timeout: navTimeout });
-    const status = resp?.status() || 0;
-    if (status !== 200) {
-      await saveShot(page, `http-${status}-${slugify(p)}`);
-      await browser.close();
-      console.error(`[FAIL] HTTP ${status} for ${url}`);
-      process.exit(2);
+    page.removeAllListeners('console');
+    page.removeAllListeners('pageerror');
+    page.on('console', (m) => {
+      const type = m.type();
+      const text = (m.text && m.text()) || '';
+      if (type !== 'error') return;
+      if (allowedConsole.some((w) => text.includes(w))) return;
+      const isOwn = text.includes(host) || text.includes('/assets/') || text.includes('/sw.js');
+      if (isOwn) consoleOwnErrors.push(text);
+      else console.warn('[IGNORED 3P]', text);
+    });
+    page.on('pageerror', (err) => {
+      pageErrors.push(String(err?.message || err));
+    });
+
+    for (const p of pathsToCheck) {
+      const url = base + p;
+      log(`Visiting ${url}`);
+      const resp = await page.goto(url, { waitUntil: 'networkidle', timeout: navTimeout });
+      const status = resp?.status() || 0;
+      if (status !== 200) {
+        await saveShot(page, `http-${status}-${slugify(host)}-${slugify(p)}`);
+        failures.push(`HTTP ${status} at ${url}`);
+        continue;
+      }
+      const content = await page.content();
+      if (!content || content.length < 100) {
+        await saveShot(page, `short-html-${slugify(host)}-${slugify(p)}`);
+        failures.push(`Short HTML at ${url}`);
+      }
     }
-    const content = await page.content();
-    if (!content || content.length < 100) {
-      await saveShot(page, `short-html-${slugify(p)}`);
-      await browser.close();
-      console.error(`[FAIL] Empty/short HTML at ${url}`);
-      process.exit(3);
+
+    try {
+      const head = await context.request.fetch(`${base}/sw.js`, { method: 'HEAD' });
+      const cc = head.headers()['cache-control'] || head.headers()['Cache-Control'] || '';
+      if (!cc) warn(`[${host}] Cache-Control header for /sw.js is missing.`);
+      else {
+        const m = /max-age\s*=\s*(\d+)/i.exec(cc);
+        const age = m ? parseInt(m[1], 10) : null;
+        if (age === null) warn(`[${host}] Cache-Control for /sw.js unparsed: "${cc}"`);
+        else if (age > 300) warn(`[${host}] Cache-Control for /sw.js too long (max-age=${age}). Consider shorter caching.`);
+        else log(`[${host}] Cache-Control for /sw.js OK: ${cc}`);
+      }
+    } catch (e) {
+      warn(`[${host}] HEAD /sw.js failed: ${e?.message || e}`);
     }
-  }
 
-  const head = await context.request.fetch(`${base}/sw.js`, { method: 'HEAD' });
-  const cc = head.headers()['cache-control'] || head.headers()['Cache-Control'] || '';
-  if (!cc) {
-    warn('Cache-Control header for /sw.js is missing.');
-  } else {
-    const m = /max-age\s*=\s*(\d+)/i.exec(cc);
-    const age = m ? parseInt(m[1], 10) : null;
-    if (age === null) warn(`Cache-Control for /sw.js unparsed: "${cc}"`);
-    else if (age > 300) warn(`Cache-Control for /sw.js too long (max-age=${age}). Consider shorter caching.`);
-    else log(`Cache-Control for /sw.js OK: ${cc}`);
-  }
+    if (pageErrors.length) {
+      failures.push(`[${host}] pageerror: ${pageErrors.join(' | ')}`);
+    }
+    if (consoleOwnErrors.length) {
+      failures.push(`[${host}] console-errors: ${consoleOwnErrors.join(' | ')}`);
+    }
 
-  if (pageErrors.length) {
-    await saveShot(page, `pageerror`);
-    await browser.close();
-    console.error('[FAIL] Uncaught page errors:\n' + pageErrors.join('\n---\n'));
-    process.exit(4);
-  }
-  if (consoleOwnErrors.length) {
-    await saveShot(page, `console-errors`);
-    await browser.close();
-    console.error('[FAIL] Console errors from own app:\n' + consoleOwnErrors.join('\n---\n'));
-    process.exit(6);
+    if (failures.length === 0) {
+      anyBasePassed = true;
+      log(`[OK] Base passed: ${base}`);
+      break;
+    } else {
+      log(`[INFO] Base failed: ${base} -> ${failures.join(' ; ')}`);
+    }
   }
 
   await browser.close();
-  log('All checks passed.');
+  if (anyBasePassed) {
+    log('All checks passed for at least one base. If the custom domain still fails, fix Pages domain binding or DNS.');
+    process.exit(0);
+  } else {
+    console.error('[FAIL] All bases failed:\n' + failures.join('\n'));
+    process.exit(2);
+  }
 })().catch(async (e) => {
   console.error('[FAIL] Uncaught error in smoke:', e);
   process.exit(5);

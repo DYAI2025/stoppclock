@@ -68,6 +68,21 @@ jobs:
           }
           NODE
 
+      - name: Guard: ensure legacy artefacts removed
+        shell: bash
+        run: |
+          set -euo pipefail
+          pattern='lovable|dev[- ]?agent|tagger'
+          echo "[guard] scanning repository for legacy artefacts ($pattern)"
+          if grep -RInEi "$pattern" \
+            --exclude-dir=.git \
+            --exclude-dir=node_modules \
+            --exclude=.github/workflows/pages.yml \
+            . ; then
+            echo "::error::Legacy vendor artefacts detected. Please remove remaining references."
+            exit 1
+          fi
+
       - name: Add CNAME and .nojekyll
         run: |
           echo "${{ env.CUSTOM_DOMAIN }}" > ./dist/CNAME

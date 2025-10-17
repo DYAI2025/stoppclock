@@ -12,11 +12,9 @@
     <script type="module" src="/src/main.tsx"></script>
     <script>
       (function () {
-        const isLocal = ["localhost", "127.0.0.1", "::1"].includes(location.hostname);
-        if ("serviceWorker" in navigator && !isLocal) {
-          addEventListener("load", () => {
-            navigator.serviceWorker.register("/sw.js").catch(() => {});
-          });
+        const local = ["localhost", "127.0.0.1", "::1"].includes(location.hostname);
+        if ("serviceWorker" in navigator && !local) {
+          addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
         }
       })();
     </script>

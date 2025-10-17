@@ -1,12 +1,19 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Not found</title>
-    <meta http-equiv="refresh" content="0; url=./" />
+    <title>Stoppclock</title>
+    <!-- Warum: Deeplinks sollen App laden, nicht 404 -->
+    <meta http-equiv="refresh" content="0; url=/" />
+    <script>
+      (function () {
+        var loc = window.location;
+        var target = "/";
+        // Optional: Pfad als Hash erhalten:
+        // target = "/#" + loc.pathname + loc.search + loc.hash;
+        loc.replace(target);
+      })();
+    </script>
   </head>
-  <body>
-    <p>Redirecting… <a href="./">Go to app</a></p>
-  </body>
-  </html>
-
+  <body>Redirecting…</body>
+</html>

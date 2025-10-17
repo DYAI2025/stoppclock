@@ -24,11 +24,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout (pinned)
-        # actions/checkout@v5.0.0
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # why: policy (SHA-pinned)
 
       - name: Setup Node (pinned)
-        # actions/setup-node@v6.0.0
         uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -40,13 +38,12 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Add CNAME and .nojekyll
+      - name: Add CNAME and .nojekyll  # why: custom domain & disable jekyll
         run: |
           echo "${{ env.CUSTOM_DOMAIN }}" > ./dist/CNAME
           touch ./dist/.nojekyll
 
       - name: Upload Pages artifact (pinned)
-        # actions/upload-pages-artifact@v4.0.0
         uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b
         with:
           path: ./dist
@@ -60,7 +57,6 @@ jobs:
     steps:
       - id: deployment
         name: Deploy to GitHub Pages (pinned)
-        # actions/deploy-pages@v4.0.5
         uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e
 
   postcheck:
@@ -79,7 +75,7 @@ jobs:
           npm i -D playwright@1.47.2
           npx playwright install --with-deps chromium
 
-      - name: Write smoke test (screenshots on failure + SW cache check + console whitelist)
+      - name: Write smoke test (hardened: pageerror fail, 3P console warn, SW cache check)
         run: |
           cat > smoke.mjs <<'EOF'
           import { chromium } from 'playwright';
@@ -87,9 +83,11 @@ jobs:
           import path from 'path';
 
           const base = (process.env.TARGET_URL || 'https://www.stoppclock.com').replace(/\/+$/,'');
+          const host = new URL(base).host;
           const pathsToCheck = ['/', '/manifest.webmanifest', '/imprint.html', '/sw.js'];
           const artifactsDir = path.resolve('artifacts/playwright');
-          const consoleErrors = [];
+          const consoleOwnErrors = [];
+          const pageErrors = [];
           const navTimeout = 30000;
 
           async function ensureDir() { await fs.mkdir(artifactsDir, { recursive: true }); }
@@ -98,12 +96,12 @@ jobs:
           function log(msg){ console.log(`[SMOKE] ${msg}`); }
           function warn(msg){ console.warn(`[SMOKE][WARN] ${msg}`); }
 
+          // why: 3rd-party noise shouldn't fail deploys
           const allowedConsole = [
             'net::ERR_BLOCKED_BY_CLIENT',
-            'adsbygoogle',
-            'googletagservices',
+            'adsbygoogle', 'googletagservices', 'googletagmanager',
             'gtag/js?id=',
-            'cookieconsent'
+            'cookieconsent',
           ];
 
           (async () => {
@@ -114,9 +112,15 @@ jobs:
             page.on('console', (m) => {
               const type = m.type();
               const text = (m.text && m.text()) || '';
-              if (type === 'error' && !allowedConsole.some(w => text.includes(w))) {
-                consoleErrors.push(text);
-              }
+              if (type !== 'error') return;
+              if (allowedConsole.some(w => text.includes(w))) return;
+              // why: only fail on own app errors (URLs to our host or built assets)
+              const isOwn = text.includes(host) || text.includes('/assets/') || text.includes('/sw.js');
+              if (isOwn) consoleOwnErrors.push(text); else console.warn('[IGNORED 3P]', text);
+            });
+
+            page.on('pageerror', (err) => {
+              pageErrors.push(String(err?.message || err));
             });
 
             for (const p of pathsToCheck) {
@@ -139,28 +143,34 @@ jobs:
               }
             }
 
+            // SW cache header (warn only)
             const head = await context.request.fetch(`${base}/sw.js`, { method: 'HEAD' });
-            const headers = head.headers();
-            const cc = headers['cache-control'] || headers['Cache-Control'] || '';
+            const cc = head.headers()['cache-control'] || head.headers()['Cache-Control'] || '';
             if (!cc) {
               warn('Cache-Control header for /sw.js is missing.');
             } else {
-              const match = /max-age\s*=\s*(\d+)/i.exec(cc);
-              const age = match ? parseInt(match[1], 10) : null;
+              const m = /max-age\s*=\s*(\d+)/i.exec(cc);
+              const age = m ? parseInt(m[1], 10) : null;
               if (age === null) {
                 warn(`Cache-Control for /sw.js unparsed: "${cc}"`);
               } else if (age > 300) {
-                warn(`Cache-Control for /sw.js too long (max-age=${age}). Consider shortening for quicker updates.`);
+                warn(`Cache-Control for /sw.js too long (max-age=${age}). Consider shorter caching.`);
               } else {
                 log(`Cache-Control for /sw.js OK: ${cc}`);
               }
             }
 
-            if (consoleErrors.length) {
-              await saveShot(page, 'console-errors');
+            if (pageErrors.length) {
+              await saveShot(page, `pageerror`);
               await browser.close();
-              console.error('[FAIL] Console errors detected:\n' + consoleErrors.join('\n---\n'));
+              console.error('[FAIL] Uncaught page errors:\n' + pageErrors.join('\n---\n'));
               process.exit(4);
+            }
+            if (consoleOwnErrors.length) {
+              await saveShot(page, `console-errors`);
+              await browser.close();
+              console.error('[FAIL] Console errors from own app:\n' + consoleOwnErrors.join('\n---\n'));
+              process.exit(6);
             }
 
             await browser.close();
@@ -178,7 +188,6 @@ jobs:
 
       - name: Upload Playwright artifacts (screenshots)
         if: always()
-        # actions/upload-artifact@v4.6.2
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: playwright-screenshots

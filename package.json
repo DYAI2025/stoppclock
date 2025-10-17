@@ -6,7 +6,6 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "postbuild": "cp -f dist/index.html dist/404.html && cp -f dist/.vite/manifest.json dist/manifest.json",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",

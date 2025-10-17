@@ -96,6 +96,20 @@ const allowedConsole = [
     }
 
     try {
+      const rootHasContent = await page.evaluate(() => {
+        const el = document.getElementById('root');
+        if (!el) return 0;
+        return el.textContent?.trim().length || el.children.length;
+      });
+      if (!rootHasContent) {
+        await saveShot(page, `empty-root-${slugify(host)}`);
+        baseFailures.push(`[${host}] #root rendered empty content`);
+      }
+    } catch (error) {
+      baseFailures.push(`[${host}] failed to inspect #root: ${error?.message || error}`);
+    }
+
+    try {
       const head = await context.request.fetch(`${base}/sw.js`, { method: 'HEAD' });
       const cc = head.headers()['cache-control'] || head.headers()['Cache-Control'] || '';
       if (!cc) warn(`[${host}] Cache-Control header for /sw.js is missing.`);
@@ -133,6 +147,9 @@ const allowedConsole = [
 
   await browser.close();
   if (anyBasePassed) {
+    if (failures.length) {
+      warn('Other base checks failed:\n' + failures.join('\n'));
+    }
     log('All checks passed for at least one base. If the custom domain still fails, fix Pages domain binding or DNS.');
     process.exit(0);
   } else {

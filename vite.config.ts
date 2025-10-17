@@ -10,25 +10,16 @@ export default defineConfig(({ mode }) => ({
     host: process.env.HOST || "127.0.0.1",
     port: Number(process.env.PORT) || 8080,
   },
-  plugins: [
-    react(),
-    mode === "development" && componentTagger(),
-  ].filter(Boolean),
+  plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
   },
   build: {
-    manifest: true,
     outDir: "dist",
+    assetsDir: "assets",
+    sourcemap: false,
     emptyOutDir: true,
-    rollupOptions: {
-      output: {
-        entryFileNames: "assets/[name].[hash].js",
-        chunkFileNames: "assets/[name].[hash].js",
-        assetFileNames: "assets/[name].[hash][.ext]",
-      },
-    },
   },
 }));

@@ -24,7 +24,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout (pinned)
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # why: policy (SHA-pinned)
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+
+      - name: Bump SW cache key to commit SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          SHORT_SHA="$(printf '%s' "${GITHUB_SHA}" | cut -c1-7)"
+          echo "Using SW cache key: sc-precache-${SHORT_SHA}"
+          perl -0777 -pe "s/const\\s+PRECACHE\\s*=\\s*'sc-precache-[^']*';/const PRECACHE = 'sc-precache-${SHORT_SHA}';/g" -i public/sw.js
+          grep -n "const PRECACHE" public/sw.js
 
       - name: Setup Node (pinned)
         uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903
@@ -38,7 +47,28 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Add CNAME and .nojekyll  # why: custom domain & disable jekyll
+      - name: Inline entry JS/CSS into dist/index.html
+        run: node scripts/inline_assets.mjs
+
+      - name: Assert entry is inlined (no external module src)
+        run: |
+          node <<'NODE'
+          import fs from 'fs';
+          const html = fs.readFileSync('dist/index.html', 'utf8');
+          const stripped = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, match => {
+            return match.includes('type="module"') ? '<inline-script></inline-script>' : match;
+          });
+          if (/<script[^>]*type="module"[^>]*src=/.test(stripped)) {
+            console.error('Inline failed: module script still references src attribute.');
+            process.exit(1);
+          }
+          if (html.includes('Loading app')) {
+            console.error('Legacy loader fallback text still present in dist/index.html');
+            process.exit(1);
+          }
+          NODE
+
+      - name: Add CNAME and .nojekyll
         run: |
           echo "${{ env.CUSTOM_DOMAIN }}" > ./dist/CNAME
           touch ./dist/.nojekyll
@@ -51,11 +81,11 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
-    outputs:
-      page_url: ${{ steps.deployment.outputs.page_url }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
         name: Deploy to GitHub Pages (pinned)
@@ -74,6 +104,11 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
+      - name: Install Playwright (Chromium only, no-save)
+        run: |
+          npm i --no-save playwright@1.47.2
+          npx playwright install --with-deps chromium
+
       - name: Show deployed artifact shape (dist/)
         run: |
           echo "=== dist/ top ==="
@@ -81,12 +116,7 @@ jobs:
           echo "=== CNAME ==="
           cat dist/CNAME || true
           echo "=== head of dist/index.html ==="
-          sed -n '1,120p' dist/index.html || true
-
-      - name: Install Playwright (Chromium only, no-save)
-        run: |
-          npm i --no-save playwright@1.47.2
-          npx playwright install --with-deps chromium
+          sed -n '1,160p' dist/index.html || true
 
       - name: Run smoke test
         env:

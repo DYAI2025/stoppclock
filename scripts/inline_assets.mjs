@@ -4,73 +4,70 @@ import path from "path";
 const distDir = path.resolve("dist");
 const indexFile = path.join(distDir, "index.html");
 
-const toAbsolute = (ref) => {
-  if (!ref) return null;
-  if (/^https?:\/\//i.test(ref)) return null;
-  if (ref.startsWith("/")) {
-    return path.join(distDir, ref.slice(1));
-  }
-  return path.join(distDir, ref);
-};
-
-const readText = (file) => fs.readFile(file, "utf8");
-const writeText = (file, value) => fs.writeFile(file, value, "utf8");
-
-const SCRIPT_RE = /<script\s+[^>]*type=["']module["'][^>]*src=["']([^"']+)["'][^>]*>\s*<\/script>/i;
-const CSS_RE = /<link\s+[^>]*rel=["']stylesheet["'][^>]*href=["']([^"']+)["'][^>]*\/?>(?:<\/link>)?/i;
-
-function info(...args) {
-  console.log("[inline]", ...args);
+function toAbs(p) {
+  if (/^https?:\/\//i.test(p)) return null;            // externe URLs nicht inlinen
+  return p.startsWith("/") ? path.join(distDir, p.slice(1)) : path.join(distDir, p);
 }
 
-function warn(...args) {
-  console.warn("[inline][WARN]", ...args);
+const readText  = (p) => fs.readFile(p, "utf8");
+const writeText = (p, s) => fs.writeFile(p, s, "utf8");
+
+const SCRIPT_RE = /<script\s+[^>]*type=["']module["'][^>]*src=["']([^"']+)["'][^>]*>\s*<\/script>/i;
+const CSS_RE    = /<link\s+[^>]*rel=["']stylesheet["'][^>]*href=["']([^"']+)["'][^>]*\/?>(?:<\/link>)?/i;
+
+const info=(...a)=>console.log("[inline]",...a);
+const warn=(...a)=>console.warn("[inline][WARN]",...a);
+
+function escapeInlineJS(js) {
+  return js
+    .replace(/<\/script/gi, "<\\/script>")
+    .replace(/<!--/g, "<\\!-->");
+}
+function escapeInlineCSS(css) {
+  return css.replace(/<\/style/gi, "<\\/style>");
 }
 
 (async () => {
   let html = await readText(indexFile);
 
-  const scriptMatch = html.match(SCRIPT_RE);
-  if (scriptMatch) {
-    const src = scriptMatch[1];
-    const abs = toAbsolute(src);
+  const sMatch = html.match(SCRIPT_RE);
+  if (sMatch) {
+    const src = sMatch[1];
+    const abs = toAbs(src);
     if (abs) {
-      const js = await readText(abs);
-      html = html.replace(
-        SCRIPT_RE,
-        `<script type="module">\n${js}\n</script>`
-      );
-      info("Inlined entry script:", src);
+      const jsRaw = await readText(abs);
+      const js = escapeInlineJS(jsRaw);
+      html = html.replace(SCRIPT_RE, `<script type="module">\n${js}\n</script>`);
+      info("Entry JS inlined:", src);
     } else {
-      warn("Skipped external script:", src);
+      warn("Externes Script, nicht inlined:", src);
     }
   } else {
-    warn("No module script with src found in index.html");
+    warn('Kein <script type="module" src="..."> gefunden.');
   }
 
-  const cssMatch = html.match(CSS_RE);
-  if (cssMatch) {
-    const href = cssMatch[1];
-    const abs = toAbsolute(href);
+  const cMatch = html.match(CSS_RE);
+  if (cMatch) {
+    const href = cMatch[1];
+    const abs = toAbs(href);
     if (abs) {
       try {
-        const css = await readText(abs);
-        html = html.replace(
-          CSS_RE,
-          `<style>\n${css}\n</style>`
-        );
-        info("Inlined stylesheet:", href);
-      } catch (error) {
-        warn("Failed to inline stylesheet:", href, error?.message || error);
+        const cssRaw = await readText(abs);
+        const css = escapeInlineCSS(cssRaw);
+        html = html.replace(CSS_RE, `<style>\n${css}\n</style>`);
+        info("CSS inlined:", href);
+      } catch (e) {
+        warn("CSS nicht lesbar (skip):", href, String(e?.message||e));
       }
     } else {
-      warn("Skipped external stylesheet:", href);
+      warn("Externes Stylesheet, nicht inlined:", href);
     }
   }
 
   await writeText(indexFile, html);
-  info("index.html updated with inline assets");
-})().catch((error) => {
-  console.error("[inline][FAIL]", error);
-  process.exit(2);
-});
+
+  const headPreview = html.split("</script>")[0].split("\n").slice(-2).join("\n");
+  info("Inline preview (tail of <script>):\n" + headPreview);
+
+  info("index.html aktualisiert:", indexFile);
+})().catch((e)=>{ console.error("[inline][FAIL]", e); process.exit(2); });

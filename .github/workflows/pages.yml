@@ -75,7 +75,7 @@ jobs:
           npm i -D playwright@1.47.2
           npx playwright install --with-deps chromium
 
-      - name: Write smoke test (hardened: pageerror fail, 3P console warn, SW cache check)
+      - name: "Write smoke test (hardened: pageerror fail, 3P console warn, SW cache check)"
         run: |
           cat > smoke.mjs <<'EOF'
           import { chromium } from 'playwright';

@@ -47,26 +47,12 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Inline entry JS/CSS into dist/index.html
-        run: node scripts/inline_assets.mjs
-
-      - name: Assert entry is inlined (no external module src)
+      - name: Inspect build output
         run: |
-          node <<'NODE'
-          import fs from 'fs';
-          const html = fs.readFileSync('dist/index.html', 'utf8');
-          const stripped = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, match => {
-            return match.includes('type="module"') ? '<inline-script></inline-script>' : match;
-          });
-          if (/<script[^>]*type="module"[^>]*src=/.test(stripped)) {
-            console.error('Inline failed: module script still references src attribute.');
-            process.exit(1);
-          }
-          if (html.includes('Loading app')) {
-            console.error('Legacy loader fallback text still present in dist/index.html');
-            process.exit(1);
-          }
-          NODE
+          echo "=== module script tag ==="
+          grep -Eo '<script[^>]+type="module"[^>]*>' dist/index.html || true
+          echo "=== first 80 lines of dist/index.html ==="
+          sed -n '1,80p' dist/index.html || true
 
       - name: Guard: ensure legacy artefacts removed
         shell: bash

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="icons/stoppclock-logo.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="icons/icon-16.png" />
+    <link rel="alternate icon" href="favicon.ico" />
+    <link
+      rel="apple-touch-icon"
+      href="icons/apple-touch-icon.png"
+      sizes="180x180"
+    />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <meta name="theme-color" content="#f97316" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stoppclock - Free Online Timer & Clock Toolkit</title>
+    <meta
+      name="description"
+      content="Professional timer and clock toolkit featuring stopwatch, countdown, alarm clock, digital clock, interval timer, chess clock, and more. Free online time management tools."
+    />
+    <meta name="author" content="Stoppclock" />
+    <meta
+      name="keywords"
+      content="timer, stopwatch, countdown, alarm, clock, interval timer, pomodoro, chess clock, time management"
+    />
+    <meta
+      property="og:title"
+      content="Stoppclock - Free Online Timer & Clock Toolkit"
+    />
+    <meta
+      property="og:description"
+      content="Professional timer and clock toolkit featuring stopwatch, countdown, alarm clock, and more."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://www.stoppclock.com" />
+    <meta
+      property="og:image"
+      content="https://lovable.dev/opengraph-image-p98pqg.png"
+    />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@stoppclock" />
+    <meta
+      name="twitter:image"
+      content="https://lovable.dev/opengraph-image-p98pqg.png"
+    />
+
+    <!-- Google Analytics 4 with Consent Mode v2 -->
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+
+      // Set default consent to 'denied' as a placeholder for Consent Mode v2
+      gtag("consent", "default", {
+        analytics_storage: "denied",
+        ad_storage: "denied",
+        ad_user_data: "denied",
+        ad_personalization: "denied",
+        wait_for_update: 500,
+      });
+
+      gtag("js", new Date());
+      // TODO: Replace 'G-XXXXXXXXXX' with your actual GA4 Measurement ID
+      gtag("config", "G‑K409QD2YSJ", {
+        anonymize_ip: true,
+        cookie_flags: "SameSite=None;Secure",
+      });
+    </script>
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G‑K409QD2YSJ"
+    ></script>
+
+    <!-- Google AdSense -->
+    <script
+      async
+      src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1712273263687132"
+      crossorigin="anonymous"
+      data-ad-frequency-hint="30s"
+    ></script>
+    <script type="module" crossorigin src="./assets/index.BVZqFkDu.js"></script>
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <div
+      id="fallback"
+      style="
+        font-family: system-ui, Arial, sans-serif;
+        max-width: 900px;
+        margin: 24px auto;
+        color: #444;
+      "
+    >
+      <h1 style="margin: 0 0 8px">Stoppclock</h1>
+      <p style="margin: 0 0 12px">
+        Loading app… If nothing appears, JavaScript may be blocked or the dev
+        server isn’t running.
+      </p>
+      <ul style="margin: 0 0 12px; padding-left: 18px">
+        <li>
+          Start locally: <code>npm run dev:8080</code> (or
+          <code>npm run dev</code>)
+        </li>
+        <li>
+          Or preview build: <code>npm run build</code> →
+          <code>npm run preview:8080</code>
+        </li>
+      </ul>
+      <p style="margin: 0 0 6px">
+        Legal pages (static): <a href="imprint.html">Imprint</a> ·
+        <a href="privacy-policy.html">Privacy Policy</a>
+      </p>
+    </div>
+    <script>
+      (function ensureFallbackHides() {
+        const root = document.getElementById("root");
+        const fallback = document.getElementById("fallback");
+        if (!root || !fallback) return;
+
+        const cleanup = () => {
+          observer.disconnect();
+          window.removeEventListener("load", onLoad);
+        };
+
+        const hideFallback = () => {
+          fallback.style.display = "none";
+          cleanup();
+        };
+
+        const onLoad = () => {
+          if (root.childElementCount > 0 || window.__APP_MOUNTED) {
+            hideFallback();
+          }
+        };
+
+        if (window.__APP_MOUNTED) {
+          hideFallback();
+          return;
+        }
+
+        const observer = new MutationObserver(() => {
+          if (root.childElementCount > 0) {
+            hideFallback();
+          }
+        });
+
+        observer.observe(root, { childList: true });
+        window.addEventListener("load", onLoad);
+
+        // Fallback timeout: Hide the fallback UI after 1.5s in case the app mounts late or JS is slow to load.
+        const FALLBACK_TIMEOUT_MS = 1500;
+        setTimeout(() => {
+          if (root.childElementCount > 0 || window.__APP_MOUNTED) {
+            hideFallback();
+          }
+        }, FALLBACK_TIMEOUT_MS);
+      })();
+    </script>
+  </body>
+</html>

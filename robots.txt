@@ -1,0 +1,33 @@
+# robots.txt for Stoppclock.com
+User-agent: *
+Allow: /
+
+# Sitemaps
+Sitemap: https://www.stoppclock.com/sitemap.xml
+
+# Google AdSense
+User-agent: Mediapartners-Google
+Allow: /
+
+# AI Crawlers — Allowed
+User-agent: Google-Extended
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+# Common Crawl (used by many AI systems)
+User-agent: CCBot
+Allow: /

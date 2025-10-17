@@ -42,12 +42,15 @@ const allowedConsole = [
   for (const base of bases) {
     const consoleOwnErrors = [];
     const pageErrors = [];
+    const badResponses = [];
+    const baseFailures = [];
     const host = new URL(base).host;
 
     log(`--- BASE: ${base} ---`);
 
     page.removeAllListeners('console');
     page.removeAllListeners('pageerror');
+    page.removeAllListeners('response');
     page.on('console', (m) => {
       const type = m.type();
       const text = (m.text && m.text()) || '';
@@ -60,6 +63,20 @@ const allowedConsole = [
     page.on('pageerror', (err) => {
       pageErrors.push(String(err?.message || err));
     });
+    page.on('response', (resp) => {
+      const status = resp.status();
+      if (status >= 400) {
+        const url = resp.url();
+        if (
+          url.includes('/assets/') ||
+          url.includes('/src/') ||
+          url.endsWith('.js') ||
+          url.endsWith('.css')
+        ) {
+          badResponses.push(`${status} ${url}`);
+        }
+      }
+    });
 
     for (const p of pathsToCheck) {
       const url = base + p;
@@ -68,13 +85,13 @@ const allowedConsole = [
       const status = resp?.status() || 0;
       if (status !== 200) {
         await saveShot(page, `http-${status}-${slugify(host)}-${slugify(p)}`);
-        failures.push(`HTTP ${status} at ${url}`);
+        baseFailures.push(`HTTP ${status} at ${url}`);
         continue;
       }
       const content = await page.content();
       if (!content || content.length < 100) {
         await saveShot(page, `short-html-${slugify(host)}-${slugify(p)}`);
-        failures.push(`Short HTML at ${url}`);
+        baseFailures.push(`Short HTML at ${url}`);
       }
     }
 
@@ -93,19 +110,24 @@ const allowedConsole = [
       warn(`[${host}] HEAD /sw.js failed: ${e?.message || e}`);
     }
 
+    if (badResponses.length) {
+      await saveShot(page, `responses-${slugify(host)}`);
+      baseFailures.push(`[${host}] bad responses:\n  - ${badResponses.join('\n  - ')}`);
+    }
     if (pageErrors.length) {
-      failures.push(`[${host}] pageerror: ${pageErrors.join(' | ')}`);
+      baseFailures.push(`[${host}] pageerror: ${pageErrors.join(' | ')}`);
     }
     if (consoleOwnErrors.length) {
-      failures.push(`[${host}] console-errors: ${consoleOwnErrors.join(' | ')}`);
+      baseFailures.push(`[${host}] console-errors: ${consoleOwnErrors.join(' | ')}`);
     }
 
-    if (failures.length === 0) {
+    if (baseFailures.length === 0) {
       anyBasePassed = true;
       log(`[OK] Base passed: ${base}`);
       break;
     } else {
-      log(`[INFO] Base failed: ${base} -> ${failures.join(' ; ')}`);
+      log(`[INFO] Base failed: ${base} -> ${baseFailures.join(' ; ')}`);
+      failures.push(...baseFailures);
     }
   }
 

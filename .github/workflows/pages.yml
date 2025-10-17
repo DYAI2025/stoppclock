@@ -80,6 +80,8 @@ jobs:
           ls -lah dist || true
           echo "=== CNAME ==="
           cat dist/CNAME || true
+          echo "=== head of dist/index.html ==="
+          sed -n '1,120p' dist/index.html || true
 
       - name: Install Playwright (Chromium only, no-save)
         run: |

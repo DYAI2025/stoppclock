@@ -5,17 +5,14 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { TimerProvider } from "@/contexts/TimerContext";
 import { CookieBanner } from "@/components/CookieBanner";
-import { useEffect } from "react";
 import Index from "./pages/Index";
 import Stopwatch from "./pages/Stopwatch";
 import Countdown from "./pages/Countdown";
-import IntervalTimer from "./pages/IntervalTimer";
+import RoundsTimer from "./pages/RoundsTimer";
 import DigitalClock from "./pages/DigitalClock";
-import AlarmClock from "./pages/AlarmClock";
-import Metronome from "./pages/Metronome";
+import WorldClock from "./pages/WorldClock";
 import ChessClock from "./pages/ChessClock";
-import LapTimer from "./pages/LapTimer";
-import PomodoroTimer from "./pages/PomodoroTimer";
+import AnalogTimer from "./pages/AnalogTimer";
 import NotFound from "./pages/NotFound";
 import FooterLegal from "@/components/FooterLegal";
 import { I18nProvider } from "@/contexts/I18nContext";
@@ -23,29 +20,13 @@ import LanguageToggle from "@/components/LanguageToggle";
 
 const queryClient = new QueryClient();
 
-declare global {
-  interface Window {
-    __APP_MOUNTED?: boolean;
-    __APP_BASE_PATH__?: string;
-  }
-}
-
-const basePath = (() => {
-  if (typeof window === "undefined") return "/";
-  const path = new URL("./", window.location.href).pathname;
-  const trimmed = path.endsWith("/") && path !== "/" ? path.slice(0, -1) : path;
-  const resolved = trimmed || "/";
-  window.__APP_BASE_PATH__ = resolved;
-  return resolved;
-})();
+const basePath = import.meta.env.BASE_URL === "/" ? "/" : import.meta.env.BASE_URL.replace(/\/$/, "");
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <I18nProvider>
       <TimerProvider>
-        { /* Mark app mounted to hide fallback */ }
-        <MountMarker />
         <Toaster />
         <Sonner />
         <CookieBanner />
@@ -55,13 +36,11 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/stopwatch" element={<Stopwatch />} />
             <Route path="/countdown" element={<Countdown />} />
-            <Route path="/interval" element={<IntervalTimer />} />
+            <Route path="/rounds" element={<RoundsTimer />} />
             <Route path="/clock" element={<DigitalClock />} />
-            <Route path="/alarm" element={<AlarmClock />} />
-            <Route path="/metronome" element={<Metronome />} />
+            <Route path="/world-clock" element={<WorldClock />} />
             <Route path="/chess" element={<ChessClock />} />
-            <Route path="/lap" element={<LapTimer />} />
-            <Route path="/pomodoro" element={<PomodoroTimer />} />
+            <Route path="/analog" element={<AnalogTimer />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
@@ -74,12 +53,3 @@ const App = () => (
 );
 
 export default App;
-
-function MountMarker() {
-  useEffect(() => {
-    window.__APP_MOUNTED = true;
-    const el = document.getElementById('fallback');
-    if (el) el.style.display = 'none';
-  }, []);
-  return null;
-}

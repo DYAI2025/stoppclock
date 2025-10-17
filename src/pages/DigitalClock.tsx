@@ -5,9 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { FullscreenButton } from "@/components/FullscreenButton";
 import { Link } from "react-router-dom";
 import SEO from "@/components/SEO";
-import CrossLinks from "@/components/CrossLinks";
 import { useTimerContext } from "@/contexts/TimerContext";
-import { useI18n } from "@/contexts/I18nContext";
 
 const TIMEZONES = [
   { name: "Berlin", timezone: "Europe/Berlin" },
@@ -33,7 +31,7 @@ export default function DigitalClock() {
   const [timezoneIndex, setTimezoneIndex] = useState(0);
 
   const currentTimezone = TIMEZONES[timezoneIndex];
-  const { t, locale } = useI18n();
+  const locale = typeof navigator !== "undefined" ? navigator.language : "en-US";
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -46,14 +44,14 @@ export default function DigitalClock() {
   useEffect(() => {
     updateTimer({
       id: timerId,
-      type: "stopwatch", // Use stopwatch type for display
-      name: `${t("clock.namePrefix")} ${currentTimezone.name}`,
+      type: "clock",
+      name: `Clock · ${currentTimezone.name}`,
       color: "clock",
       currentTime: time.getTime(),
       isRunning: true,
       path: "/clock",
     });
-  }, [time, currentTimezone, updateTimer, timerId, t]);
+  }, [time, currentTimezone, updateTimer]);
 
   const formatTime = () => {
     return time.toLocaleTimeString(locale, { 
@@ -100,7 +98,7 @@ export default function DigitalClock() {
             style={{ backgroundColor: `hsl(var(--clock))` }}
           >
             <Globe className="w-6 h-6" />
-            {t("clock.switch")}
+            Next city
           </Button>
           <FullscreenButton isFullscreen={isFullscreen} onToggle={toggleFullscreen} color="clock" />
         </div>
@@ -115,15 +113,14 @@ export default function DigitalClock() {
         description="Large digital clock for your screen. Ideal as a wall‑screen clock; helpful for planning across time zones (switch between cities/zones)."
         keywords={["digital clock","online clock","time","world time","time zones"]}
         jsonLd={[
-          {"@context":"https://schema.org","@type":"WebApplication","name":"Digital Clock","url":"https://stoppclock.com/clock","applicationCategory":"UtilitiesApplication"},
-          {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
-            {"@type":"Question","name":"Can I switch between time zones?","acceptedAnswer":{"@type":"Answer","text":"Yes. Switch between cities/time zones directly on the page."}},
-            {"@type":"Question","name":"Is there a fullscreen mode?","acceptedAnswer":{"@type":"Answer","text":"Yes. Use the fullscreen button for a clean, large clock display."}},
-            {"@type":"Question","name":"Does it work offline?","acceptedAnswer":{"@type":"Answer","text":"Core pages are cached after the first visit or when installed (PWA)."}}
-          ]}
+            {"@context":"https://schema.org","@type":"WebApplication","name":"Digital Clock","url":"https://stoppclock.com/clock","applicationCategory":"UtilitiesApplication"},
+            {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+              {"@type":"Question","name":"Can I switch between time zones?","acceptedAnswer":{"@type":"Answer","text":"Yes. Cycle through key cities with the switch button."}},
+              {"@type":"Question","name":"Is there a fullscreen mode?","acceptedAnswer":{"@type":"Answer","text":"Yes. Use the fullscreen button for a distraction-free wall display."}},
+              {"@type":"Question","name":"Does it keep running in the background?","acceptedAnswer":{"@type":"Answer","text":"Yes. The clock keeps updating while you explore other timers."}}
+            ]}
         ]}
       />
-      <CrossLinks />
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <Link to="/">
@@ -157,7 +154,7 @@ export default function DigitalClock() {
                 style={{ backgroundColor: `hsl(var(--clock))` }}
               >
                 <Globe className="w-5 h-5" />
-                {t("clock.switch")}
+                Next city
               </Button>
             </div>
 
@@ -167,7 +164,7 @@ export default function DigitalClock() {
 
         <Card>
           <CardContent className="p-6">
-            <h3 className="text-lg font-bold mb-4 text-clock">{t("clock.available")}</h3>
+            <h3 className="text-lg font-bold mb-4 text-clock">Presets</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
               {TIMEZONES.map((tz, index) => (
                 <Button

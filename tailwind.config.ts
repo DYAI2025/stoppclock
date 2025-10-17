@@ -51,10 +51,8 @@ export default {
         countdown: "hsl(var(--countdown))",
         interval: "hsl(var(--interval))",
         clock: "hsl(var(--clock))",
-        alarm: "hsl(var(--alarm))",
-        metronome: "hsl(var(--metronome))",
+        analog: "hsl(var(--analog))",
         chess: "hsl(var(--chess))",
-        lap: "hsl(var(--lap))",
       },
       backgroundImage: {
         'gradient-primary': 'var(--gradient-primary)',

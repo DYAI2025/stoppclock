@@ -7,26 +7,25 @@ import {
   Clock,
   Hourglass,
   Zap,
+  Gauge,
   Timer as TimerIcon,
+  Swords,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useI18n } from "@/contexts/I18nContext";
 import { Badge } from "@/components/ui/badge";
 
 export const ActiveTimerBar = () => {
   const { activeTimers, removeTimer } = useTimerContext();
   const navigate = useNavigate();
-  const { t, locale } = useI18n();
+  const locale = typeof navigator !== "undefined" ? navigator.language : "en-US";
 
   const formatTime = (ms: number, type: string, timerName?: string) => {
-    // Special handling for clocks - display as actual time
-    if (timerName?.startsWith("Clock -") || timerName?.startsWith("Uhr -")) {
+    if (type === "clock") {
       const date = new Date(ms);
       return date.toLocaleTimeString(locale, {
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit",
-        hour12: false,
       });
     }
 
@@ -65,8 +64,12 @@ export const ActiveTimerBar = () => {
         return Timer;
       case "countdown":
         return Hourglass;
-      case "interval":
+      case "rounds":
         return Zap;
+      case "analog":
+        return Gauge;
+      case "chess":
+        return Swords;
       case "lap":
         return TimerIcon;
       default:
@@ -87,7 +90,7 @@ export const ActiveTimerBar = () => {
           <div className="flex items-center gap-2">
             <div className="h-1 w-8 rounded-full bg-primary/40" />
             <h3 className="text-sm font-semibold text-foreground/80 tracking-wide uppercase">
-              {t("bar.active")}
+              Active timers
             </h3>
             <Badge variant="secondary" className="text-xs px-2 py-0.5">
               {displayTimers.length}
@@ -95,7 +98,7 @@ export const ActiveTimerBar = () => {
           </div>
           {hasMoreTimers && (
             <span className="text-xs text-muted-foreground italic">
-              +{activeTimers.length - 3} {t("bar.more")}
+              +{activeTimers.length - 3} more
             </span>
           )}
         </div>
@@ -104,7 +107,19 @@ export const ActiveTimerBar = () => {
           {displayTimers.map((timer) => {
             const Icon = getTimerIcon(timer.type);
             const isExpiring =
-              timer.type === "countdown" && timer.currentTime < 10000;
+              (timer.type === "countdown" || timer.type === "analog") &&
+              timer.currentTime < 10000;
+            const chessMeta =
+              timer.type === "chess"
+                ? (timer.meta as {
+                    activeSide: "left" | "right";
+                    leftMs: number;
+                    rightMs: number;
+                    increment?: number;
+                    labelLeft?: string;
+                    labelRight?: string;
+                  })
+                : undefined;
 
             return (
               <Card
@@ -160,7 +175,7 @@ export const ActiveTimerBar = () => {
                       >
                         {timer.name}
                       </p>
-                      {timer.type === "interval" && (
+                      {(timer.type === "rounds") && (
                         <Badge
                           variant="outline"
                           className="mt-0.5 text-[10px] px-1.5 py-0"
@@ -169,23 +184,48 @@ export const ActiveTimerBar = () => {
                             color: `hsl(var(--${timer.color}))`,
                           }}
                         >
-                          {timer.isWorking ? t("bar.interval.work") : t("bar.interval.rest")}
+                          {timer.isWorking ? "Work" : "Rest"}
                         </Badge>
                       )}
                     </div>
                   </div>
 
                   {/* Timer display */}
-                  <div
-                    className={`timer-display text-3xl font-bold mb-2 transition-all ${
-                      isExpiring ? "animate-pulse text-destructive" : ""
-                    }`}
-                    style={
-                      !isExpiring ? { color: `hsl(var(--${timer.color}))` } : {}
-                    }
-                  >
-                    {formatTime(timer.currentTime, timer.type, timer.name)}
-                  </div>
+                  {timer.type === "chess" && chessMeta ? (
+                    <div className="space-y-1">
+                      <div
+                        className={`timer-display text-2xl font-bold flex items-center justify-between ${
+                          chessMeta.activeSide === "left"
+                            ? "text-chess"
+                            : "text-muted-foreground"
+                        }`}
+                      >
+                        <span>{chessMeta.labelLeft ?? "Player A"}</span>
+                        <span>{formatTime(chessMeta.leftMs, "countdown")}</span>
+                      </div>
+                      <div
+                        className={`timer-display text-2xl font-bold flex items-center justify-between ${
+                          chessMeta.activeSide === "right"
+                            ? "text-chess"
+                            : "text-muted-foreground"
+                        }`}
+                      >
+                        <span>{chessMeta.labelRight ?? "Player B"}</span>
+                        <span>{formatTime(chessMeta.rightMs, "countdown")}</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      className={`timer-display text-3xl font-bold mb-2 transition-all ${
+                        isExpiring ? "animate-pulse text-destructive" : ""
+                      }`}
+                      style={
+                        !isExpiring ? { color: `hsl(var(--${timer.color}))` } : {}
+                      }
+                    >
+                      {formatTime(timer.currentTime, timer.type, timer.name)}
+                    </div>
+                  )}
 
                   {/* Running indicator */}
                   {timer.isRunning && (

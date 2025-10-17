@@ -6,7 +6,6 @@ import { FullscreenButton } from "@/components/FullscreenButton";
 import { Link } from "react-router-dom";
 import { useTimerContext } from "@/contexts/TimerContext";
 import SEO from "@/components/SEO";
-import CrossLinks from "@/components/CrossLinks";
 
 export default function Stopwatch() {
   const { updateTimer, getTimer, removeTimer } = useTimerContext();
@@ -212,7 +211,6 @@ export default function Stopwatch() {
           </Card>
         )}
 
-        <CrossLinks />
       </div>
     </div>
   );

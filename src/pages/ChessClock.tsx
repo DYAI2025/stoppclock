@@ -1,79 +1,165 @@
-import { useState, useEffect, useRef } from "react";
-import { RotateCcw, Home } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import { Home, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Link } from "react-router-dom";
+import { useTimerContext } from "@/contexts/TimerContext";
 import SEO from "@/components/SEO";
-import CrossLinks from "@/components/CrossLinks";
+
+const TIMER_ID = "chess-1";
+
+const clamp = (v: number, min: number, max: number) =>
+  Math.min(Math.max(v, min), max);
+
+const format = (ms: number) => {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+  const minutes = Math.floor(totalSeconds / 60)
+    .toString()
+    .padStart(2, "0");
+  const seconds = (totalSeconds % 60).toString().padStart(2, "0");
+  return `${minutes}:${seconds}`;
+};
 
 export default function ChessClock() {
-  const [player1Time, setPlayer1Time] = useState(300000); // 5 minutes
-  const [player2Time, setPlayer2Time] = useState(300000);
-  const [activePlayer, setActivePlayer] = useState<1 | 2 | null>(null);
-  const [initialTime, setInitialTime] = useState(5);
+  const { updateTimer, getTimer } = useTimerContext();
+  const stored = getTimer(TIMER_ID);
+
+  const [baseMinutes, setBaseMinutes] = useState<number>(
+    typeof stored?.meta?.baseMinutes === "number" ? (stored.meta.baseMinutes as number) : 5
+  );
+  const [incrementSeconds, setIncrementSeconds] = useState<number>(
+    typeof stored?.meta?.increment === "number" ? (stored.meta.increment as number) : 0
+  );
+  const [labelLeft, setLabelLeft] = useState<string>((stored?.meta?.labelLeft as string) || "Player A");
+  const [labelRight, setLabelRight] = useState<string>((stored?.meta?.labelRight as string) || "Player B");
+
+  const initialMs = baseMinutes * 60 * 1000;
+
+  const [leftMs, setLeftMs] = useState<number>(
+    typeof stored?.meta?.leftMs === "number" ? (stored.meta.leftMs as number) : initialMs
+  );
+  const [rightMs, setRightMs] = useState<number>(
+    typeof stored?.meta?.rightMs === "number" ? (stored.meta.rightMs as number) : initialMs
+  );
+  const [activeSide, setActiveSide] = useState<"left" | "right">(
+    stored?.meta?.activeSide === "right" ? "right" : "left"
+  );
+  const [isRunning, setIsRunning] = useState(stored?.isRunning ?? false);
+
   const intervalRef = useRef<number>();
 
   useEffect(() => {
-    if (activePlayer) {
-      intervalRef.current = window.setInterval(() => {
-        if (activePlayer === 1) {
-          setPlayer1Time((t) => Math.max(0, t - 10));
-        } else {
-          setPlayer2Time((t) => Math.max(0, t - 10));
-        }
-      }, 10);
-    } else {
+    updateTimer({
+      id: TIMER_ID,
+      type: "chess",
+      name: `Chess Clock` ,
+      color: "chess",
+      currentTime: activeSide === "left" ? leftMs : rightMs,
+      isRunning,
+      path: "/chess",
+      meta: {
+        baseMinutes,
+        increment: incrementSeconds,
+        leftMs,
+        rightMs,
+        activeSide,
+        labelLeft,
+        labelRight,
+      },
+    });
+  }, [leftMs, rightMs, activeSide, isRunning, baseMinutes, incrementSeconds, labelLeft, labelRight, updateTimer]);
+
+  useEffect(() => {
+    if (!isRunning) {
       if (intervalRef.current) clearInterval(intervalRef.current);
+      return;
     }
+
+    intervalRef.current = window.setInterval(() => {
+      if (activeSide === "left") {
+        setLeftMs((prev) => {
+          const next = prev - 20;
+          if (next <= 0) {
+            setIsRunning(false);
+            return 0;
+          }
+          return next;
+        });
+      } else {
+        setRightMs((prev) => {
+          const next = prev - 20;
+          if (next <= 0) {
+            setIsRunning(false);
+            return 0;
+          }
+          return next;
+        });
+      }
+    }, 20);
+
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [activePlayer]);
+  }, [activeSide, isRunning]);
 
-  const formatTime = (ms: number) => {
-    const totalSeconds = Math.floor(ms / 1000);
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+  const applyPreset = () => {
+    const next = baseMinutes * 60 * 1000;
+    setLeftMs(next);
+    setRightMs(next);
+    setActiveSide("left");
+    setIsRunning(false);
   };
 
-  const handlePlayerClick = (player: 1 | 2) => {
-    if (player1Time === 0 || player2Time === 0) return;
-    setActivePlayer(player === 1 ? 2 : 1);
+  const handleTap = (side: "left" | "right") => {
+    if (!isRunning) return;
+    if (side !== activeSide) return;
+    if (side === "left") {
+      setLeftMs((prev) => Math.max(0, prev + incrementSeconds * 1000));
+      setActiveSide("right");
+    } else {
+      setRightMs((prev) => Math.max(0, prev + incrementSeconds * 1000));
+      setActiveSide("left");
+    }
   };
 
-  const handleReset = () => {
-    const timeMs = initialTime * 60000;
-    setPlayer1Time(timeMs);
-    setPlayer2Time(timeMs);
-    setActivePlayer(null);
+  const startMatch = () => {
+    if (!isRunning) {
+      setLeftMs((prev) => (prev === 0 ? baseMinutes * 60 * 1000 : prev));
+      setRightMs((prev) => (prev === 0 ? baseMinutes * 60 * 1000 : prev));
+      setActiveSide("left");
+      setIsRunning(true);
+    } else {
+      setIsRunning(false);
+    }
   };
 
-  const handleSetTime = () => {
-    const timeMs = initialTime * 60000;
-    setPlayer1Time(timeMs);
-    setPlayer2Time(timeMs);
-    setActivePlayer(null);
+  const resetMatch = () => {
+    const next = baseMinutes * 60 * 1000;
+    setLeftMs(next);
+    setRightMs(next);
+    setActiveSide("left");
+    setIsRunning(false);
   };
+
+  const leftLost = leftMs === 0 && isRunning === false && activeSide === "left";
+  const rightLost = rightMs === 0 && isRunning === false && activeSide === "right";
 
   return (
     <div className="min-h-screen bg-gradient-hero p-6">
       <SEO
-        title="Chess Clock – Online two‑player game timer | Stoppclock"
-        description="Simple online chess clock for two players. Clear display with start/stop and switching — ideal for training or casual games."
-        keywords={["chess clock","chess timer","two player timer","game timer"]}
-        jsonLd={[
-          {"@context":"https://schema.org","@type":"WebApplication","name":"Chess Clock","url":"https://stoppclock.com/chess","applicationCategory":"UtilitiesApplication"},
-          {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
-            {"@type":"Question","name":"Is this suitable for casual games?","acceptedAnswer":{"@type":"Answer","text":"Yes, it’s designed for quick casual and training games with a clean, readable layout."}},
-            {"@type":"Question","name":"Does it work offline?","acceptedAnswer":{"@type":"Answer","text":"Core pages are cached after your first visit or installation (PWA)."}},
-            {"@type":"Question","name":"Is it free?","acceptedAnswer":{"@type":"Answer","text":"Yes. Stoppclock is free. Analytics/ads only load with consent."}}
-          ]}
-        ]}
+        title="Chess Clock – Online two-player timer with increments"
+        description="Fast chess clock with configurable base time and increments. Works fullscreen and keeps running while you browse other tools."
+        keywords={["chess clock","online chess timer","increment timer","blitz chess"]}
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "WebApplication",
+          name: "Chess Clock",
+          url: "https://www.stoppclock.com/chess",
+          applicationCategory: "UtilitiesApplication",
+        }}
       />
-      <CrossLinks />
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="max-w-5xl mx-auto space-y-8">
         <div className="flex items-center justify-between">
           <Link to="/">
             <Button variant="ghost" className="gap-2">
@@ -88,76 +174,117 @@ export default function ChessClock() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card
             className={`border-4 cursor-pointer transition-all ${
-              activePlayer === 1 ? 'opacity-100' : 'opacity-60'
-            } ${player1Time === 0 ? 'border-destructive' : ''}`}
-            style={{ borderColor: activePlayer === 1 ? `hsl(var(--chess))` : undefined }}
-            onClick={() => handlePlayerClick(1)}
+              activeSide === "left" ? "opacity-100" : "opacity-70"
+            } ${leftLost ? "border-destructive" : "border-transparent"}`}
+            style={{ borderColor: activeSide === "left" ? "hsl(var(--chess))" : undefined }}
+            onClick={() => handleTap("left")}
           >
             <CardContent className="p-12 text-center space-y-4">
-              <h2 className="text-3xl font-bold text-chess">Player 1</h2>
-              <div className={`timer-display text-7xl md:text-8xl font-bold ${
-                player1Time === 0 ? 'text-destructive' : 'text-chess'
-              }`}>
-                {formatTime(player1Time)}
+              <h2 className="text-3xl font-bold text-chess">
+                {labelLeft}
+              </h2>
+              <div
+                className={`timer-display text-7xl md:text-8xl font-bold ${
+                  leftLost ? "text-destructive" : "text-chess"
+                }`}
+              >
+                {format(leftMs)}
               </div>
-              {player1Time === 0 && (
-                <p className="text-2xl font-bold text-destructive">Time's Up!</p>
-              )}
             </CardContent>
           </Card>
 
           <Card
             className={`border-4 cursor-pointer transition-all ${
-              activePlayer === 2 ? 'opacity-100' : 'opacity-60'
-            } ${player2Time === 0 ? 'border-destructive' : ''}`}
-            style={{ borderColor: activePlayer === 2 ? `hsl(var(--chess))` : undefined }}
-            onClick={() => handlePlayerClick(2)}
+              activeSide === "right" ? "opacity-100" : "opacity-70"
+            } ${rightLost ? "border-destructive" : "border-transparent"}`}
+            style={{ borderColor: activeSide === "right" ? "hsl(var(--chess))" : undefined }}
+            onClick={() => handleTap("right")}
           >
             <CardContent className="p-12 text-center space-y-4">
-              <h2 className="text-3xl font-bold text-chess">Player 2</h2>
-              <div className={`timer-display text-7xl md:text-8xl font-bold ${
-                player2Time === 0 ? 'text-destructive' : 'text-chess'
-              }`}>
-                {formatTime(player2Time)}
+              <h2 className="text-3xl font-bold text-chess">
+                {labelRight}
+              </h2>
+              <div
+                className={`timer-display text-7xl md:text-8xl font-bold ${
+                  rightLost ? "text-destructive" : "text-chess"
+                }`}
+              >
+                {format(rightMs)}
               </div>
-              {player2Time === 0 && (
-                <p className="text-2xl font-bold text-destructive">Time's Up!</p>
-              )}
             </CardContent>
           </Card>
         </div>
 
         <Card>
           <CardContent className="p-6 space-y-4">
-            <div className="flex flex-col md:flex-row gap-4 items-end">
-              <div className="flex-1 space-y-2">
-                <label className="text-sm font-medium">Time per player (minutes)</label>
+            <div className="grid gap-4 md:grid-cols-5">
+              <div className="space-y-1">
+                <label className="text-xs uppercase text-muted-foreground">Base minutes</label>
                 <Input
                   type="number"
-                  min="1"
-                  max="60"
-                  value={initialTime}
-                  onChange={(e) => setInitialTime(parseInt(e.target.value) || 5)}
-                  className="text-center"
+                  min={1}
+                  max={60}
+                  value={baseMinutes}
+                  onChange={(e) => setBaseMinutes(clamp(parseInt(e.target.value || "5", 10), 1, 60))}
+                  aria-label="Base minutes per player"
                 />
               </div>
+              <div className="space-y-1">
+                <label className="text-xs uppercase text-muted-foreground">Increment (seconds)</label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={60}
+                  value={incrementSeconds}
+                  onChange={(e) => setIncrementSeconds(clamp(parseInt(e.target.value || "0", 10), 0, 60))}
+                  aria-label="Increment seconds"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs uppercase text-muted-foreground">Player A name</label>
+                <Input
+                  value={labelLeft}
+                  onChange={(e) => setLabelLeft(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs uppercase text-muted-foreground">Player B name</label>
+                <Input
+                  value={labelRight}
+                  onChange={(e) => setLabelRight(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1 flex flex-col justify-end">
+                <Button
+                  onClick={applyPreset}
+                  style={{ backgroundColor: "hsl(var(--chess))" }}
+                >
+                  Apply preset
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
               <Button
-                onClick={handleSetTime}
+                onClick={startMatch}
                 className="gap-2"
-                style={{ backgroundColor: `hsl(var(--chess))` }}
+                style={{ backgroundColor: "hsl(var(--chess))" }}
               >
-                Set Time
+                {isRunning ? "Pause" : "Start"}
               </Button>
               <Button
-                onClick={handleReset}
                 variant="outline"
+                onClick={resetMatch}
                 className="gap-2"
-                style={{ borderColor: `hsl(var(--chess))`, color: `hsl(var(--chess))` }}
+                style={{ borderColor: "hsl(var(--chess))", color: "hsl(var(--chess))" }}
               >
-                <RotateCcw className="w-5 h-5" />
-                Reset
+                <RotateCcw className="w-4 h-4" /> Reset clocks
               </Button>
             </div>
+
+            <p className="text-sm text-muted-foreground">
+              Tap the active player’s clock after every move. The configured increment is added automatically when you hit the side toggle. Settings persist while you explore other timers.
+            </p>
           </CardContent>
         </Card>
       </div>

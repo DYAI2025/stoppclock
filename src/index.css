@@ -43,10 +43,8 @@ All colors MUST be HSL.
     --countdown: 25 95% 53%;
     --interval: 262 83% 58%;
     --clock: 199 89% 48%;
-    --alarm: 348 83% 47%;
-    --metronome: 43 96% 56%;
+    --analog: 32 96% 55%;
     --chess: 280 67% 47%;
-    --lap: 173 80% 40%;
 
     /* Gradient backgrounds */
     --gradient-primary: linear-gradient(
@@ -89,6 +87,7 @@ All colors MUST be HSL.
     --border: 220 13% 16%;
     --input: 220 13% 16%;
     --ring: 237 83% 67%;
+    --analog: 28 94% 62%;
   }
 }
 

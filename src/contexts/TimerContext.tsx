@@ -4,11 +4,12 @@ import React, {
   useState,
   useEffect,
   useRef,
+  useCallback,
 } from "react";
 
 export interface ActiveTimer {
   id: string;
-  type: "stopwatch" | "countdown" | "interval" | "lap";
+  type: "stopwatch" | "countdown" | "rounds" | "analog" | "chess" | "clock" | "lap";
   name: string;
   color: string;
   currentTime: number;
@@ -16,6 +17,7 @@ export interface ActiveTimer {
   targetTime?: number;
   isWorking?: boolean;
   path: string;
+  meta?: Record<string, unknown>;
 }
 
 interface TimerContextType {
@@ -31,6 +33,21 @@ export const TimerProvider = ({ children }: { children: React.ReactNode }) => {
   const [activeTimers, setActiveTimers] = useState<ActiveTimer[]>([]);
   const intervalRef = useRef<number>();
 
+  // Hydrate timers from localStorage to keep session across reloads
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("stoppclock-active-timers");
+      if (stored) {
+        const parsed = JSON.parse(stored) as ActiveTimer[];
+        if (Array.isArray(parsed)) {
+          setActiveTimers(parsed);
+        }
+      }
+    } catch (error) {
+      console.warn("[TimerContext] Failed to restore timers:", error);
+    }
+  }, []);
+
   // Update all running timers every 10ms for precise timing
   useEffect(() => {
     intervalRef.current = window.setInterval(() => {
@@ -40,11 +57,11 @@ export const TimerProvider = ({ children }: { children: React.ReactNode }) => {
 
           if (timer.type === "stopwatch" || timer.type === "lap") {
             return { ...timer, currentTime: timer.currentTime + 10 };
-          } else if (timer.type === "countdown") {
+          } else if (timer.type === "countdown" || timer.type === "analog") {
             const newTime = Math.max(0, timer.currentTime - 10);
             // Keep timer running state even at 0 to show completion
             return { ...timer, currentTime: newTime, isRunning: newTime > 0 };
-          } else if (timer.type === "interval") {
+          } else if (timer.type === "rounds") {
             const newTime = timer.currentTime - 10;
             if (newTime <= 0) {
               // Switch between work and rest
@@ -56,6 +73,21 @@ export const TimerProvider = ({ children }: { children: React.ReactNode }) => {
               };
             }
             return { ...timer, currentTime: newTime };
+          } else if (timer.type === "chess") {
+            // chess timers manage individual clocks, expect meta with player info
+            const update = timer.meta as { activeSide: "left" | "right"; leftMs: number; rightMs: number } | undefined;
+            if (!update) return timer;
+            const { activeSide, leftMs, rightMs } = update;
+            const updated = activeSide === "left" ? Math.max(0, leftMs - 10) : Math.max(0, rightMs - 10);
+            const nextMeta = activeSide === "left"
+              ? { ...update, leftMs: updated, activeSide, outOfTime: updated === 0 }
+              : { ...update, rightMs: updated, activeSide, outOfTime: updated === 0 };
+            return {
+              ...timer,
+              currentTime: updated,
+              isRunning: !nextMeta.outOfTime,
+              meta: nextMeta,
+            };
           }
 
           return timer;
@@ -68,7 +100,16 @@ export const TimerProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
-  const updateTimer = (timer: ActiveTimer) => {
+  // Persist timers
+  useEffect(() => {
+    try {
+      localStorage.setItem("stoppclock-active-timers", JSON.stringify(activeTimers));
+    } catch (error) {
+      console.warn("[TimerContext] Failed to persist timers:", error);
+    }
+  }, [activeTimers]);
+
+  const updateTimer = useCallback((timer: ActiveTimer) => {
     setActiveTimers((timers) => {
       const existingIndex = timers.findIndex((t) => t.id === timer.id);
       if (existingIndex >= 0) {
@@ -76,24 +117,19 @@ export const TimerProvider = ({ children }: { children: React.ReactNode }) => {
         newTimers[existingIndex] = timer;
         return newTimers;
       } else {
-        // Limit to 3 active timers maximum
-        if (timers.length >= 3) {
-          // Replace the oldest timer
-          const newTimers = [...timers.slice(1), timer];
-          return newTimers;
-        }
         return [...timers, timer];
       }
     });
-  };
+  }, []);
 
-  const removeTimer = (id: string) => {
+  const removeTimer = useCallback((id: string) => {
     setActiveTimers((timers) => timers.filter((t) => t.id !== id));
-  };
+  }, []);
 
-  const getTimer = (id: string) => {
-    return activeTimers.find((t) => t.id === id);
-  };
+  const getTimer = useCallback(
+    (id: string) => activeTimers.find((t) => t.id === id),
+    [activeTimers]
+  );
 
   return (
     <TimerContext.Provider

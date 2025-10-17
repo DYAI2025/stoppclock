@@ -173,8 +173,7 @@
             .catch(() => {});
         } else {
           window.addEventListener("load", () => {
-            const swUrl = new URL("/sw.js", window.location.origin);
-            navigator.serviceWorker.register(swUrl.href).catch(() => {});
+            navigator.serviceWorker.register("/sw.js").catch(() => {});
           });
         }
       }

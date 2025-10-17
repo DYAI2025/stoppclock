@@ -66,7 +66,7 @@ jobs:
   postcheck:
     needs: deploy
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
     steps:
       - name: Setup Node (pinned)
         uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903
@@ -79,15 +79,15 @@ jobs:
           npm i -D playwright@1.47.2
           npx playwright install --with-deps chromium
 
-      - name: Write smoke test (with screenshots on failure)
+      - name: Write smoke test (screenshots on failure + SW cache check + console whitelist)
         run: |
-          cat > smoke.mjs <<'PLAYWRIGHT'
+          cat > smoke.mjs <<'EOF'
           import { chromium } from 'playwright';
           import fs from 'fs/promises';
           import path from 'path';
 
           const base = (process.env.TARGET_URL || 'https://www.stoppclock.com').replace(/\/+$/,'');
-          const pathsToCheck = ['/', '/manifest.webmanifest', '/imprint.html'];
+          const pathsToCheck = ['/', '/manifest.webmanifest', '/imprint.html', '/sw.js'];
           const artifactsDir = path.resolve('artifacts/playwright');
           const consoleErrors = [];
           const navTimeout = 30000;
@@ -96,9 +96,14 @@ jobs:
           async function saveShot(page, name) { await ensureDir(); await page.screenshot({ path: path.join(artifactsDir, `${name}.png`), fullPage: true }); }
           function slugify(s){ return s.replace(/[^a-z0-9]+/gi,'-').replace(/^-+|-+$/g,'').toLowerCase() || 'root'; }
           function log(msg){ console.log(`[SMOKE] ${msg}`); }
+          function warn(msg){ console.warn(`[SMOKE][WARN] ${msg}`); }
 
           const allowedConsole = [
-            // Allowlist recurring harmless console noise if needed.
+            'net::ERR_BLOCKED_BY_CLIENT',
+            'adsbygoogle',
+            'googletagservices',
+            'gtag/js?id=',
+            'cookieconsent'
           ];
 
           (async () => {
@@ -108,8 +113,8 @@ jobs:
 
             page.on('console', (m) => {
               const type = m.type();
-              const text = m.text() || '';
-              if (type === 'error' && !allowedConsole.some((w) => text.includes(w))) {
+              const text = (m.text && m.text()) || '';
+              if (type === 'error' && !allowedConsole.some(w => text.includes(w))) {
                 consoleErrors.push(text);
               }
             });
@@ -134,6 +139,23 @@ jobs:
               }
             }
 
+            const head = await context.request.fetch(`${base}/sw.js`, { method: 'HEAD' });
+            const headers = head.headers();
+            const cc = headers['cache-control'] || headers['Cache-Control'] || '';
+            if (!cc) {
+              warn('Cache-Control header for /sw.js is missing.');
+            } else {
+              const match = /max-age\s*=\s*(\d+)/i.exec(cc);
+              const age = match ? parseInt(match[1], 10) : null;
+              if (age === null) {
+                warn(`Cache-Control for /sw.js unparsed: "${cc}"`);
+              } else if (age > 300) {
+                warn(`Cache-Control for /sw.js too long (max-age=${age}). Consider shortening for quicker updates.`);
+              } else {
+                log(`Cache-Control for /sw.js OK: ${cc}`);
+              }
+            }
+
             if (consoleErrors.length) {
               await saveShot(page, 'console-errors');
               await browser.close();
@@ -147,7 +169,7 @@ jobs:
             console.error('[FAIL] Uncaught error in smoke:', e);
             process.exit(5);
           });
-          PLAYWRIGHT
+          EOF
 
       - name: Run smoke test
         env:

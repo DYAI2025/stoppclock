@@ -1,0 +1,165 @@
+name: Deploy Stoppclock to GitHub Pages
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: 22
+  CUSTOM_DOMAIN: www.stoppclock.com
+  TARGET_URL: https://www.stoppclock.com/
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (pinned)
+        # actions/checkout@v5.0.0
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+
+      - name: Setup Node (pinned)
+        # actions/setup-node@v6.0.0
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Add CNAME and .nojekyll
+        run: |
+          echo "${{ env.CUSTOM_DOMAIN }}" > ./dist/CNAME
+          touch ./dist/.nojekyll
+
+      - name: Upload Pages artifact (pinned)
+        # actions/upload-pages-artifact@v4.0.0
+        uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b
+        with:
+          path: ./dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        name: Deploy to GitHub Pages (pinned)
+        # actions/deploy-pages@v4.0.5
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e
+
+  postcheck:
+    needs: deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Setup Node (pinned)
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install Playwright (Chromium only)
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm i -D playwright@1.47.2
+          npx playwright install --with-deps chromium
+
+      - name: Write smoke test (with screenshots on failure)
+        run: |
+          cat > smoke.mjs <<'PLAYWRIGHT'
+          import { chromium } from 'playwright';
+          import fs from 'fs/promises';
+          import path from 'path';
+
+          const base = (process.env.TARGET_URL || 'https://www.stoppclock.com').replace(/\/+$/,'');
+          const pathsToCheck = ['/', '/manifest.webmanifest', '/imprint.html'];
+          const artifactsDir = path.resolve('artifacts/playwright');
+          const consoleErrors = [];
+          const navTimeout = 30000;
+
+          async function ensureDir() { await fs.mkdir(artifactsDir, { recursive: true }); }
+          async function saveShot(page, name) { await ensureDir(); await page.screenshot({ path: path.join(artifactsDir, `${name}.png`), fullPage: true }); }
+          function slugify(s){ return s.replace(/[^a-z0-9]+/gi,'-').replace(/^-+|-+$/g,'').toLowerCase() || 'root'; }
+          function log(msg){ console.log(`[SMOKE] ${msg}`); }
+
+          const allowedConsole = [
+            // Allowlist recurring harmless console noise if needed.
+          ];
+
+          (async () => {
+            const browser = await chromium.launch();
+            const context = await browser.newContext({ ignoreHTTPSErrors: true });
+            const page = await context.newPage();
+
+            page.on('console', (m) => {
+              const type = m.type();
+              const text = m.text() || '';
+              if (type === 'error' && !allowedConsole.some((w) => text.includes(w))) {
+                consoleErrors.push(text);
+              }
+            });
+
+            for (const p of pathsToCheck) {
+              const url = base + p;
+              log(`Visiting ${url}`);
+              const resp = await page.goto(url, { waitUntil: 'networkidle', timeout: navTimeout });
+              const status = resp?.status() || 0;
+              if (status !== 200) {
+                await saveShot(page, `http-${status}-${slugify(p)}`);
+                await browser.close();
+                console.error(`[FAIL] HTTP ${status} for ${url}`);
+                process.exit(2);
+              }
+              const content = await page.content();
+              if (!content || content.length < 100) {
+                await saveShot(page, `short-html-${slugify(p)}`);
+                await browser.close();
+                console.error(`[FAIL] Empty/short HTML at ${url}`);
+                process.exit(3);
+              }
+            }
+
+            if (consoleErrors.length) {
+              await saveShot(page, 'console-errors');
+              await browser.close();
+              console.error('[FAIL] Console errors detected:\n' + consoleErrors.join('\n---\n'));
+              process.exit(4);
+            }
+
+            await browser.close();
+            log('All checks passed.');
+          })().catch(async (e) => {
+            console.error('[FAIL] Uncaught error in smoke:', e);
+            process.exit(5);
+          });
+          PLAYWRIGHT
+
+      - name: Run smoke test
+        env:
+          TARGET_URL: ${{ env.TARGET_URL }}
+        run: node smoke.mjs
+
+      - name: Upload Playwright artifacts (screenshots)
+        if: always()
+        # actions/upload-artifact@v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: playwright-screenshots
+          path: artifacts/playwright/**
+          if-no-files-found: ignore
+          retention-days: 7

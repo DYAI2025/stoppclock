@@ -5,6 +5,7 @@ const CORE_ASSETS = [
     "./",
     "./index.html",
     "./manifest.webmanifest",
+    "./sw.js",
     "./favicon.ico",
     "./icons/stoppclock-logo.svg",
     "./icons/icon-32.png",

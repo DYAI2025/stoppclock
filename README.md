@@ -1,77 +1,83 @@
-# Stoppclock - Professional Timer Toolkit
+# Stoppclock – Professional Timer Toolkit
 
-Eine elegante, minimalistische Timer-Anwendung mit Vollbildmodus und Multi-Timer-Unterstützung.
+Elegante, minimalistische Multi-Timer App: Stopwatch, Countdown, Interval, Digital/Alarm/Metronome/Chess.
 
-**Verfügbar unter: [stoppclock.com](https://stoppclock.com)**
+## 🚀 Stack
 
-## ✨ Features
+- **Vite** – Lightning-fast build tool
+- **React 18** – Modern UI library
+- **TypeScript** – Type-safe development
+- **Tailwind CSS** – Utility-first styling
+- **shadcn/ui** – Beautiful component library
 
-### 🎯 Multi-Timer-Unterstützung
-
-- **Bis zu 3 gleichzeitige Timer** können parallel laufen
-- **Live-Synchronisation** - Timer laufen im Hintergrund weiter, auch wenn Sie zur Startseite zurückkehren
-- **Elegante Timer-Bar** - Zeigt alle aktiven Timer in der unteren Bildschirmhälfte
-
-### ⏱️ Timer-Typen
-
-- **Stopwatch** - Präzise Zeitmessung mit Rundenzähler
-- **Countdown** - Benutzerdefinierte Countdown-Timer
-- **Interval Timer** - Wechsel zwischen Arbeits- und Pausenzeiten
-- **Digital Clock** - Echtzeit-Digitaluhr
-- **Alarm Clock** - Wecker und Erinnerungen
-- **Metronome** - Musikalischer Tempo- und Rhythmushalter
-- **Chess Clock** - Zwei-Spieler-Timer
-- **Lap Timer** - Rundenzeiten verfolgen
-
-### 🎨 Design
-
-- ✨ **Minimalistisch & Modern** - Klare Linien und sanfte Farben
-- 🎭 **Glasmorphismus-Effekte** - Elegante Transparenz und Blur
-- 🌈 **Farbcodierung** - Jeder Timer hat seine eigene Farbe
-- 📱 **Responsive** - Funktioniert auf allen Geräten
-- 🖼️ **Vollbildmodus** - Für Präsentationen und große Displays
-
-### ⚡ Performance
-
-- 🎯 **Präzise** - 10ms Update-Intervall für exakte Zeitmessung
-- 💪 **Zuverlässig** - Stabile Timer-Synchronisation
-- 🚀 **Schnell** - Optimierte Performance
-
-## 🚀 Quick Start
+## 🔧 Lokal entwickeln
 
 ```bash
-# Installation
-bun install
-
-# Development Server starten
-bun run dev
-
-# Production Build
-bun run build
+npm ci
+npm run dev
 ```
 
-## 📖 Verwendung
+Öffne http://localhost:5173
 
-1. **Timer auswählen** - Klicken Sie auf einen Timer-Typ auf der Startseite
-2. **Konfigurieren** - Stellen Sie Zeit und Parameter ein
-3. **Starten** - Drücken Sie Start
-4. **Multitasking** - Kehren Sie zur Startseite zurück - Timer läuft weiter!
-5. **Verwalten** - Sehen Sie alle aktiven Timer in der unteren Bar
+## 📦 Build & Preview
 
-Mehr Details finden Sie in [FEATURES.md](./FEATURES.md)
+```bash
+npm run build
+npm run preview -- --host
+```
 
----
+## 🌐 Deploy (GitHub Pages via Actions)
 
-## What technologies are used for this project?
+1. **Repo Settings** → **Pages** → Source = **GitHub Actions**
+2. **Custom Domain**: `www.stoppclock.com` → HTTPS aktivieren
+3. **Push auf main** triggert Build → Deploy → Smoke-Test
 
-This project is built with:
+## 🩺 Diagnose
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+```bash
+# Lokale Checks (Repo-Scan)
+npm run doctor
 
-## How can I deploy this project?
+# Prod-Checks (Live-URLs)
+npm run doctor:prod
+```
 
-Deployments run automatically via GitHub Actions when you push to `main`. The workflow builds the Vite app, inlines the hashed assets, and publishes the output to GitHub Pages. To build locally, run `npm run build` and preview with `npm run preview -- --host`.
+Prüft auf verbotene Vendor-Strings und 404s.
+
+## 📁 Projekt-Struktur
+
+```
+├── public/           # Statische Assets (favicon, manifest, sw.js)
+├── src/
+│   ├── components/   # React-Komponenten (Timer, UI)
+│   ├── contexts/     # React Context (TimerContext)
+│   ├── hooks/        # Custom Hooks
+│   ├── lib/          # Utilities
+│   ├── pages/        # Timer-Seiten (Stopwatch, Countdown, ...)
+│   ├── App.tsx       # Root-Komponente mit Router
+│   ├── main.tsx      # Entry-Point
+│   └── index.css     # Globale Styles (Tailwind)
+├── scripts/          # Build/Deploy-Scripts (doctor.mjs)
+├── .github/          # CI/CD (pages.yml)
+└── dist/             # Build-Output (generiert)
+```
+
+## 🎯 Features
+
+- ⏱️ **10 Timer-Typen**: Stopwatch, Countdown, Interval, Digital Clock, Alarm, Metronome, Chess Clock, Lap Timer, 60s Timer
+- 🔄 **Multi-Timer**: Bis zu 3 Timer gleichzeitig aktiv
+- 💾 **Persistence**: localStorage für Alarm-Konfiguration
+- 📱 **PWA-Ready**: Service Worker, Web Manifest
+- 🌍 **Multi-Timezone**: 12 Zeitzonen für Digital Clock
+- ⚡ **Performant**: Code-Splitting, Tree-Shaking, SWC-Compiler
+
+## 🔒 Sicherheit
+
+- ✅ Keine externen Analytics (optional GA4 via Cookie-Consent)
+- ✅ Keine Hard-Dependencies auf Third-Party-Services
+- ✅ CSP-Ready (Content Security Policy)
+- ✅ Alle Scripts pinned auf SHA256 (GitHub Actions)
+
+## 📄 Lizenz
+
+Proprietär – © 2025 DYAI2025

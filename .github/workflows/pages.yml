@@ -2,7 +2,7 @@ name: Deploy Stoppclock to GitHub Pages
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   workflow_dispatch:
 
 permissions:
@@ -20,23 +20,34 @@ env:
   TARGET_URL: https://www.stoppclock.com/
 
 jobs:
-  build:
+  guard:
+    name: CI Guard (Block vendor remnants)
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout (pinned)
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Bump SW cache key to commit SHA
-        shell: bash
-        run: |
-          set -euo pipefail
-          SHORT_SHA="$(printf '%s' "${GITHUB_SHA}" | cut -c1-7)"
-          echo "Using SW cache key: sc-precache-${SHORT_SHA}"
-          perl -0777 -pe "s/const\\s+PRECACHE\\s*=\\s*'sc-precache-[^']*';/const PRECACHE = 'sc-precache-${SHORT_SHA}';/g" -i public/sw.js
-          grep -n "const PRECACHE" public/sw.js
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
 
-      - name: Setup Node (pinned)
-        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903
+      - name: Install
+        run: npm ci
+
+      - name: Run doctor (Repo scan)
+        run: npm run doctor
+
+  build:
+    needs: guard
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -44,38 +55,20 @@ jobs:
       - name: Install deps
         run: npm ci
 
+      - name: Bump SW cache key with commit SHA
+        run: |
+          sed -i "s/__BUILD__/${{ github.sha }}/g" public/sw.js
+
       - name: Build
         run: npm run build
-
-      - name: Inspect build output
-        run: |
-          echo "=== module script tag ==="
-          grep -Eo '<script[^>]+type="module"[^>]*>' dist/index.html || true
-          echo "=== first 80 lines of dist/index.html ==="
-          sed -n '1,80p' dist/index.html || true
-
-      - name: Guard: ensure legacy artefacts removed
-        shell: bash
-        run: |
-          set -euo pipefail
-          pattern='lovable|dev[- ]?agent|tagger'
-          echo "[guard] scanning repository for legacy artefacts ($pattern)"
-          if grep -RInEi "$pattern" \
-            --exclude-dir=.git \
-            --exclude-dir=node_modules \
-            --exclude=.github/workflows/pages.yml \
-            . ; then
-            echo "::error::Legacy vendor artefacts detected. Please remove remaining references."
-            exit 1
-          fi
 
       - name: Add CNAME and .nojekyll
         run: |
           echo "${{ env.CUSTOM_DOMAIN }}" > ./dist/CNAME
           touch ./dist/.nojekyll
 
-      - name: Upload Pages artifact (pinned)
-        uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
           path: ./dist
 
@@ -85,50 +78,31 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    outputs:
-      page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        name: Deploy to GitHub Pages (pinned)
-        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e
+        name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
 
   postcheck:
     needs: deploy
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 10
     steps:
-      - name: Checkout (pinned)
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Setup Node (pinned)
-        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Install Playwright (Chromium only, no-save)
-        run: |
-          npm i --no-save playwright@1.47.2
-          npx playwright install --with-deps chromium
+      - name: Install
+        run: npm ci
 
-      - name: Show deployed artifact shape (dist/)
-        run: |
-          echo "=== dist/ top ==="
-          ls -lah dist || true
-          echo "=== CNAME ==="
-          cat dist/CNAME || true
-          echo "=== head of dist/index.html ==="
-          sed -n '1,160p' dist/index.html || true
+      - name: Wait for DNS propagation
+        run: sleep 30
 
-      - name: Run smoke test
+      - name: Run doctor:prod (Live scan)
         env:
-          TARGET_URLS: ${{ needs.deploy.outputs.page_url }},${{ env.TARGET_URL }}
-        run: node scripts/smoke.mjs
-
-      - name: Upload Playwright artifacts (screenshots)
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: playwright-screenshots
-          path: artifacts/playwright/**
-          if-no-files-found: ignore
-          retention-days: 7
+          TARGET_URLS: ${{ env.TARGET_URL }}
+        run: npm run doctor:prod

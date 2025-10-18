@@ -1,18 +1,20 @@
 <!doctype html>
-<html lang="en">
+<html lang="de">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0f172a" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/favicon.ico" />
-    <title>Stoppclock</title>
+    <title>Stoppclock - Professional Timer Toolkit</title>
+    <meta name="description" content="Kostenlose Online-Timer: Stoppuhr, Countdown, Intervall-Timer, Wecker, Schachuhr und mehr." />
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
       (function () {
-        const local = ["localhost", "127.0.0.1", "::1"].includes(location.hostname);
+        const local = ["localhost","127.0.0.1","::1"].includes(location.hostname);
         if ("serviceWorker" in navigator && !local) {
           addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
         }
